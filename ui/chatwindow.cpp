@@ -12,6 +12,7 @@ ChatWindow::ChatWindow(QWidget *parent)
     m_chatClient(new TcpClient(Config::GetServerHostName(), Config::getServerPort(), parent))
 {
     ui->setupUi(this);
+    ui->splitter->handle(1)->setAttribute(Qt::WA_Hover, true);
     m_chatClient->start();
     connectEventSlots();
 }

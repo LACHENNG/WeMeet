@@ -1,0 +1,20 @@
+﻿/* QSplitter样式 */
+QSplitter {
+    background-color: transparent; /* 背景透明 */
+    border: none; /* 无边框 */
+    width:5px;
+
+}
+
+QSplitter::handle {
+    border-radius: 5px; /* 分割条圆角 */
+
+    background-color: #e3e3e3;
+}
+
+
+
+QSplitter::handle:hover {
+    background-color: #bdbdbd; /* 鼠标悬停时背景颜色 */
+/*      background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #a6a6a6, stop:1 #ffffff);*/
+}

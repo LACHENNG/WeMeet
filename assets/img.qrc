@@ -3,5 +3,7 @@
         <file>img/Customer Copy.png</file>
         <file>img/CustomerService.png</file>
         <file>img/loading4.gif</file>
+        <file>qss/style.qss</file>
     </qresource>
+    <qresource prefix="/qss"/>
 </RCC>

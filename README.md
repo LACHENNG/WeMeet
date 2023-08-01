@@ -1,5 +1,9 @@
 ### 基于LanceNet v1.1.0 构建的视频会议系统
 
+QT 15.2 + MSVC 2019
+
+protobuf：3.20.0
+
 **技术概览**
 
 1. 前端使用Qt 5.14.2 构建的UI，和QT内置的网络类 Qt Network
