@@ -217,6 +217,7 @@ void QNChatMessage::paintEvent(QPaintEvent *event)
         QTextOption option(Qt::AlignLeft | Qt::AlignVCenter);
         option.setWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere);
         painter.setFont(this->font());
+
         painter.drawText(m_textRightRect,m_msg,option);
     }  else if(m_userType == User_Type::User_Time) { // 时间
         QPen penText;

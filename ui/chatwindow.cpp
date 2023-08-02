@@ -5,15 +5,23 @@
 #include <QDateTime>
 #include <src/protoc/message.pb.h>
 #include <ui/chatmessage/qnchatmessage.h>
-
+#include <QFileDialog>
+#include <QFileIconProvider>
+#include <QTimer>
+#include <opencv2/opencv.hpp>
 ChatWindow::ChatWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::ChatWindow),
     m_chatClient(new TcpClient(Config::GetServerHostName(), Config::getServerPort(), parent))
 {
     ui->setupUi(this);
+
     ui->splitter->handle(1)->setAttribute(Qt::WA_Hover, true);
+
+    m_cameraVideo = new CameraVideo(ui->displayWidget, 30, 0, parent),
+
     m_chatClient->start();
+
     connectEventSlots();
 }
 
@@ -89,6 +97,60 @@ void ChatWindow::on_sendButton_clicked()
 
 }
 
+void ChatWindow::on_fileButton_clicked()
+{
+    auto filepath = QFileDialog::getOpenFileName(this, tr("Open"), "");
+    if(filepath.isEmpty())
+        return ;
+    // send file
+    QFileInfo file_info(filepath);
+    QFileIconProvider icon_provider;
+    QIcon icon = icon_provider.icon(file_info);
+
+    //QTextCursor cursor = ui->textInput->textCursor();
+    //cursor.insertImage(icon.pixmap(64,64).toImage());
+//    // 创建一个QLabel对象
+//    QLabel *label = new QLabel();
+
+//    // 使用QIcon的pixmap()方法获取图片的QPixmap对象
+//    QPixmap pixmap = icon.pixmap(64, 64);
+
+//    // 使用QLabel的setPixmap()方法设置图片
+//    label->setPixmap(pixmap);
+
+//    // 显示QLabel对象
+//    label->show();
+
+
+}
+
+
+
+void ChatWindow::on_videoButton_clicked()
+{
+    static qint64 i = -1; i++;
+    // open camera
+    if(i % 2 == 0){
+        ui->videoButton->setText(QString::fromLocal8Bit("关闭视频"));
+        m_cameraVideo->startCap();
+    }else{ // close camera
+        ui->videoButton->setText(QString::fromLocal8Bit("开启视频"));
+        m_cameraVideo->stopCap();
+    }
+}
+
+void ChatWindow::on_soundButton_clicked()
+{
+    static qint64 i = -1; i++;
+    // open camera
+    if(i % 2 == 0){
+        ui->soundButton->setText(QString::fromLocal8Bit("关闭声音"));
+
+    }else{ // close camera
+        ui->soundButton->setText(QString::fromLocal8Bit("开启声音"));
+    }
+}
+
 void ChatWindow::connectEventSlots()
 {
     connect(m_chatClient.get(), SIGNAL(protobufMessage(MessagePtr)),
@@ -135,3 +197,67 @@ void ChatWindow::mayAddTimeTolistWidget(QString curMsgTime)
     }
 }
 
+CameraVideo::CameraVideo(QWidget* showWhere, int fps, int cameraIdx,  QWidget *parent)
+    : m_showWhere(showWhere),
+    m_fps(fps),
+    m_cameraIdx(cameraIdx),
+    m_pixmapLable(new QLabel(showWhere)),
+    m_timerCameraFrame(new QTimer(parent)),
+    m_cap(new cv::VideoCapture(cameraIdx))
+{
+    this->setFps(fps);
+    this->setCameraIdx(cameraIdx);
+
+    connect(this->m_timerCameraFrame, SIGNAL(timeout()),
+            this, SLOT(readCameraFrame()));
+}
+
+void CameraVideo::startCap()
+{
+    m_cap->open(m_cameraIdx);
+    m_timerCameraFrame->start();
+}
+
+void CameraVideo::readCameraFrame()
+{
+    using namespace cv;
+    // 创建一个Mat对象，用于存储摄像头的帧
+    Mat frame;
+    *m_cap >> frame;
+
+    QImage image= QImage((const unsigned char*)(frame.data), frame.cols, frame.rows,
+                          QImage::Format_RGB888).rgbSwapped();
+
+    m_pixmapLable->setPixmap(QPixmap::fromImage(image).
+                             scaledToWidth(m_showWhere->size().width(), Qt::SmoothTransformation));
+    m_pixmapLable->resize(m_showWhere->size());
+
+    qDebug() << m_showWhere->size();
+    m_pixmapLable->move(0, 0);
+    m_pixmapLable->show();
+}
+
+void CameraVideo::stopCap()
+{
+    m_timerCameraFrame->stop();
+    m_cap->release();
+    m_pixmapLable->clear();
+    m_pixmapLable->show();
+}
+
+void CameraVideo::setFps(int Fps)
+{
+    m_fps = std::max(1, Fps);
+    bool active = m_timerCameraFrame->isActive();
+    if(active){
+        m_timerCameraFrame->stop();
+    }
+    m_timerCameraFrame->setInterval(1000 / Fps);
+
+    if(active) m_timerCameraFrame->start();
+}
+
+void CameraVideo::setCameraIdx(int idx)
+{
+    m_cameraIdx = idx;
+}

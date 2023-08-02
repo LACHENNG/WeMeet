@@ -36,9 +36,9 @@
        <number>20</number>
       </property>
       <widget class="QWidget" name="layoutWidget">
-       <layout class="QVBoxLayout" name="verticalLayout_3" stretch="1,0">
+       <layout class="QVBoxLayout" name="verticalLayout_3" stretch="3,0">
         <item>
-         <widget class="QWidget" name="dispalyWidget" native="true"/>
+         <widget class="QWidget" name="displayWidget" native="true"/>
         </item>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="0,0,0,0">

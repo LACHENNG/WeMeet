@@ -1,4 +1,7 @@
 ﻿/* QSplitter样式 */
+QWight{
+    background-color: #ffffff;
+}
 QSplitter {
     background-color: transparent; /* 背景透明 */
     border: none; /* 无边框 */

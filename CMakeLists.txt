@@ -1,4 +1,4 @@
-﻿cmake_minimum_required(VERSION 3.5)
+﻿cmake_minimum_required(VERSION 3.20.1)
 
 project(ChatClient VERSION 0.1 LANGUAGES CXX)
 
@@ -9,11 +9,12 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+
 # include current dir
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets Network)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Network)
+find_package(Qt5 REQUIRED COMPONENTS Widgets Network gui core  ) # opengl
+
 
 ######################Protobuf related ############################
 set(Protobuf_INCLUDE_DIRS "D:/Software/install/protobuf3.20.0Debug/include")
@@ -26,24 +27,14 @@ link_directories(${Protobuf_LINK_DIRS})
 # message("Protobuf_INCLUDE_DIRS: " ${Protobuf_LIBRARIES})
 ######################!Protobuf related! ############################
 
-
-
-###################### some mismatch when invloving MSVC in QT######
-##################### ref to :https://blog.csdn.net/qq_42123832/article/details/115347309?spm=1001.2014.3001.5506#
-if(MSVC)
-    # Use the static C library for all build types
-    foreach(var
-        CMAKE_C_FLAGS CMAKE_C_FLAGS_DEBUG CMAKE_C_FLAGS_RELEASE
-        CMAKE_C_FLAGS_MINSIZEREL CMAKE_C_FLAGS_RELWITHDEBINFO
-        CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE
-        CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO
-      )
-      if(${var} MATCHES "/MD")
-        string(REGEX REPLACE "/MD" "/MT" ${var} "${${var}}")
-      endif()
-    endforeach()
-endif(MSVC)
-
+######################opencv related ############################
+find_package(OpenCV  REQUIRED
+             PATHS "D:/Software/install/opencv/build"  # do not use chinese characters in path
+             NO_DEFAULT_PATH )
+include_directories(${OpenCV_inCLUDE_DIRS})
+message("\nOpenCV_INCLUDE_DIRS: " ${OpenCV_INCLUDE_DIRS} "\n")
+#message("OpenCV_LIBS: " ${OpenCV_LIBS})
+######################!OpenCV related! ############################
 
 set(PROJECT_SOURCES
     main.cpp
@@ -70,46 +61,22 @@ set(PROJECT_SOURCES
     src/protoc/message.pb.cc
 )
 
-if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
-    qt_add_executable(ChatClient
-        MANUAL_FINALIZATION
-        ${PROJECT_SOURCES}
-    )
-# Define target properties for Android with Qt 6 as:
-#    set_property(TARGET ChatClient APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
-#                 ${CMAKE_CURRENT_SOURCE_DIR}/android)
-# For more information, see https://doc.qt.io/qt-6/qt-add-executable.html#target-creation
-else()
-    if(ANDROID)
-        add_library(ChatClient SHARED
-            ${PROJECT_SOURCES}
-        )
-# Define properties for Android with Qt 5 after find_package() calls as:
-#    set(ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android")
-    else()
-        add_executable(ChatClient
-            ${PROJECT_SOURCES}
-            src/codec/protobuf_fwd.h
-        )
-
-    endif()
-
-endif()
-
+add_executable(ChatClient
+    ${PROJECT_SOURCES}
+    src/codec/protobuf_fwd.h
+)
 
 target_link_libraries(ChatClient PRIVATE
     Qt${QT_VERSION_MAJOR}::Widgets
     Qt${QT_VERSION_MAJOR}::Network
+    Qt::Gui
+    Qt::Core
+#    Qt::OpenGL
+    ${OpenCV_LIBS}
     ${Protobuf_LIBRARIES}
     ws2_32 # winsock2
 )
 
-# Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
-# If you are developing for iOS or macOS you should consider setting an
-# explicit, fixed bundle identifier manually though.
-if(${QT_VERSION} VERSION_LESS 6.1.0)
-  set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER com.example.ChatClient)
-endif()
 set_target_properties(ChatClient PROPERTIES
     ${BUNDLE_ID_OPTION}
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
@@ -117,15 +84,3 @@ set_target_properties(ChatClient PROPERTIES
     MACOSX_BUNDLE TRUE
     WIN32_EXECUTABLE TRUE
 )
-
-include(GNUInstallDirs)
-install(TARGETS ChatClient
-    BUNDLE DESTINATION .
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
-
-if(QT_VERSION_MAJOR EQUAL 6)
-    message("!!!!!!!!!!!!!!!!")
-    qt_finalize_executable(ChatClient)
-endif()
