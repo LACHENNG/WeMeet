@@ -43,6 +43,8 @@ set(PROJECT_SOURCES
     ui/chatwindow.cpp
     ui/chatwindow.h
     ui/chatwindow.ui
+    src/cameravideo.h
+    src/cameravideo.cpp
     ui/chatmessage/qnchatmessage.h
     ui/chatmessage/qnchatmessage.cpp
 
