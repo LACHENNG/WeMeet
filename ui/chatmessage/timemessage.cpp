@@ -4,7 +4,7 @@
 #include <QTextDocument>
 #include <QTextOption>
 
-
+#include <QDebug>
 TimeMessage::TimeMessage(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::timemessage)
@@ -13,9 +13,9 @@ TimeMessage::TimeMessage(QWidget *parent) :
     ui->timeLabel->setText("Warn: call setTime before display");
 }
 
-void TimeMessage::setTime(QString timeSecsFromUnixEpoch)
+void TimeMessage::setTime(qint64 timeSecsFromUnixEpoch)
 {
-    QString time = QDateTime::fromMSecsSinceEpoch(timeSecsFromUnixEpoch.toInt()).toString("hh:mm");
+    QString time = QDateTime::fromSecsSinceEpoch(timeSecsFromUnixEpoch).toString("hh:mm:ss");
     ui->timeLabel->setText(time);
 }
 

@@ -26,9 +26,7 @@ void CameraVideo::startCap()
 
 void CameraVideo::readCameraFrame()
 {
-    using namespace cv;
-    // 创建一个Mat对象，用于存储摄像头的帧
-    Mat frame;
+    cv::Mat frame;
     *m_cap >> frame;
 
     QImage image= QImage((const unsigned char*)(frame.data), frame.cols, frame.rows,
@@ -37,8 +35,6 @@ void CameraVideo::readCameraFrame()
     m_pixmapLable->setPixmap(QPixmap::fromImage(image).
                              scaledToWidth(m_showWhere->size().width(), Qt::SmoothTransformation));
     m_pixmapLable->resize(m_showWhere->size());
-
-    qDebug() << m_showWhere->size();
     m_pixmapLable->move(0, 0);
     m_pixmapLable->show();
 }

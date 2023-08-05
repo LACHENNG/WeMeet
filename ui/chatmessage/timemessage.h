@@ -19,7 +19,7 @@ class TimeMessage : public QWidget
 public:
     explicit TimeMessage(QWidget *parent = nullptr);
     //set time displayed in hh::mm format, pass in a time seconds from unix epoch
-    void setTime(QString timeSecsFromUnixEpoch);
+    void setTime(qint64 timeSecsFromUnixEpoch);
 
     ~TimeMessage();
 

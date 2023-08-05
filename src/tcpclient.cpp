@@ -17,7 +17,6 @@ TcpClient::TcpClient(const QString &hostname,
     setPeerPort(port);
     connectEventSlots();
     setProxy(QNetworkProxy::NoProxy);
-
 }
 
 TcpClient::~TcpClient()
@@ -34,10 +33,9 @@ void TcpClient::start()
 void TcpClient::OnMessage(MessagePtr message)
 {
      if(!message){
-         qDebug() << "invalid protobuf message, discard...";
+         qDebug() << "invalid protobuf message, discarded...";
          return ;
      }
-
      qDebug() << "OnMessage : " << message->GetTypeName().data();
      emit protobufMessage(message);
 }
@@ -46,6 +44,7 @@ void TcpClient::OnMessage(MessagePtr message)
 void TcpClient::OnConnected()
 {
     qDebug() << "connected";
+//     setSocketOption(QAbstractSocket::LowDelayOption, 1);
 }
 
 void TcpClient::OnDisConnected()
@@ -58,7 +57,7 @@ void TcpClient::send(const google::protobuf::Message& msg)
     QByteArray data = m_codec->encodeMessage(msg);
     if(data.size() == 0){
         qDebug() << "Warn: encodeMessage failed, skip send msg [ type name = "
-                 << msg.GetTypeName().data() << "] ";
+                 << msg.GetTypeName().data() << " ] ";
     }
     write(data);
 }
@@ -66,8 +65,7 @@ void TcpClient::send(const google::protobuf::Message& msg)
 void TcpClient::onError(QAbstractSocket::SocketError errCode)
 {
     //Note: QAbstractSocket::RemoteHostClosedError
-    // will emit dissconnected too.
-
+    //      will emit dissconnected too.
     qDebug()<< "OnError : " << QAbstractSocket::errorString()
             << "code : " << errCode;
 }
@@ -84,7 +82,6 @@ void TcpClient::connectEventSlots()
             m_codec.get(), SLOT(onRawBytes()));
     connect(m_codec.get(), SIGNAL(rawBytesDecoded(MessagePtr)),
             this, SLOT(OnMessage(MessagePtr)) );
-
 }
 
 

@@ -11,6 +11,8 @@
 
 class ProtobufCodec;
 
+// provide core events callbacks in network programing
+// use to send and receive data from peer
 class TcpClient : public QTcpSocket
 {
     Q_OBJECT

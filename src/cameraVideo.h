@@ -13,7 +13,8 @@ namespace cv { class VideoCapture; };
 class CameraVideo : public QObject{
     Q_OBJECT
 public :
-    CameraVideo(QWidget* showWhere = nullptr, int fps = 30, int cameraIdx = 0, QWidget *parent = nullptr);
+    CameraVideo(QWidget* showWhere = nullptr, int fps = 30,
+                int cameraIdx = 0, QWidget *parent = nullptr);
 public:
     // start camera with index cameraIdx and show it to QWidget* showWhere
     void startCap();
