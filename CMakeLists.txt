@@ -27,7 +27,7 @@ link_directories(${Protobuf_LINK_DIRS})
 # message("Protobuf_INCLUDE_DIRS: " ${Protobuf_LIBRARIES})
 ######################!Protobuf related! ############################
 
-######################opencv related ############################
+######################OpenCV related ############################
 find_package(OpenCV  REQUIRED
              PATHS "D:/Software/install/opencv/build"  # do not use chinese characters in path
              NO_DEFAULT_PATH )
@@ -43,15 +43,24 @@ set(PROJECT_SOURCES
     ui/chatwindow.cpp
     ui/chatwindow.h
     ui/chatwindow.ui
-    src/cameravideo.h
-    src/cameravideo.cpp
-    ui/chatmessage/qnchatmessage.h
-    ui/chatmessage/qnchatmessage.cpp
+    ui/chatmessage/timemessage.ui
+    ui/chatmessage/textmessage.ui
+    ui/chatmessage/filemessage.ui
+
+    ui/chatmessage/timemessage.h
+    ui/chatmessage/timemessage.cpp
+    ui/chatmessage/textmessage.h
+    ui/chatmessage/textmessage.cpp
+    ui/chatmessage/filemessage.h
+    ui/chatmessage/filemessage.cpp
+    ui/chatmessage/messagecommon.h
 
     src/tcpclient.cpp
     src/tcpclient.h
     src/config.cpp
     src/config.h
+    src/cameravideo.h
+    src/cameravideo.cpp
 
     src/codec/packet.cpp
     src/codec/packet.h
@@ -65,7 +74,6 @@ set(PROJECT_SOURCES
 
 add_executable(ChatClient
     ${PROJECT_SOURCES}
-    src/codec/protobuf_fwd.h
 )
 
 target_link_libraries(ChatClient PRIVATE

@@ -17,6 +17,8 @@ void TimeMessage::setTime(qint64 timeSecsFromUnixEpoch)
 {
     QString time = QDateTime::fromSecsSinceEpoch(timeSecsFromUnixEpoch).toString("hh:mm:ss");
     ui->timeLabel->setText(time);
+
+    setMsgTime(timeSecsFromUnixEpoch);
 }
 
 TimeMessage::~TimeMessage()

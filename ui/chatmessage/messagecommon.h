@@ -20,8 +20,8 @@ public:
     qint64 msgTimeSecs() const { return m_msgTimeSecsSinceEpoch; }
 
 private:
-    int m_msgId; // to distinguish from different Messages
-    qint64 m_msgTimeSecsSinceEpoch; // message time
+    int m_msgId = 0; // to distinguish from different Messages
+    qint64 m_msgTimeSecsSinceEpoch = 0; // message time
 };
 
 #endif

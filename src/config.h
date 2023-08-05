@@ -11,7 +11,7 @@ public:
     Config(const QString& filePath = "./config/config.txt");
 
     static QString GetServerHostName(){
-        return "172.25.251.202"; // WSL2 in my local machine
+        return "172.29.167.72"; // WSL2 in my local machine
     }
 
     static quint16 getServerPort(){

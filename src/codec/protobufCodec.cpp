@@ -23,10 +23,10 @@ QByteArray ProtobufCodec::encodeMessage(const Message &message)
 
 void ProtobufCodec::onRawBytes()
 {
+    //FIXME: this may helpful to use to implement progress bar? eg. on file download or so?
     static int i = 1;
     qDebug() << i++ << " on Raw Bytes";
 
-    // FIXME: performance issue
     while(Packet::canParseFromArray(peekBytes(Packet::kHeaderLen).data(), this->m_tcpPtr->bytesAvailable()))
     {
          QByteArray buffer =  m_tcpPtr->read( this->m_tcpPtr->bytesAvailable() );

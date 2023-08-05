@@ -5,6 +5,7 @@
 #define TIMEMESSAGE_H
 
 #include <QWidget>
+#include <ui/chatmessage/messagecommon.h>
 
 namespace Ui {
 class timemessage;
@@ -12,7 +13,7 @@ class timemessage;
 
 // TimeMessage is a Widget show time in format hh::mm, and can be constructed and added to
 // QListView as a QListViewItem
-class TimeMessage : public QWidget
+class TimeMessage : public QWidget, public MessageCommon
 {
     Q_OBJECT
 

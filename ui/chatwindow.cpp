@@ -5,12 +5,15 @@
 #include "src/config.h"
 #include <QDateTime>
 #include <src/protoc/message.pb.h>
-#include <ui/chatmessage/qnchatmessage.h>
+
 #include <QFileDialog>
 #include <QFileIconProvider>
+#include <QMessageBox>
 
-
-
+#include <ui/chatmessage/messagecommon.h>
+#include <ui/chatmessage/timemessage.h>
+#include <ui/chatmessage/textmessage.h>
+#include <ui/chatmessage/filemessage.h>
 
 ChatWindow::ChatWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -19,7 +22,10 @@ ChatWindow::ChatWindow(QWidget *parent)
 {
     ui->setupUi(this);
     ui->splitter->handle(1)->setAttribute(Qt::WA_Hover, true);
+    ui->listWidget->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    ui->listWidget->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
 
+    // construct CameraVideo after ui->setupUi
     m_cameraVideo = new CameraVideo(ui->displayWidget, 30, 0, parent),
     m_chatClient->start();
     connectEventSlots();
@@ -32,11 +38,10 @@ ChatWindow::~ChatWindow()
 
 void ChatWindow::sendTextMessage(const QString &msg)
 {
-    // 创建一个 TextMessage 对象，并设置文本内容
     MeetChat::Message message;
-    message.set_sender_id("chenl");
+    message.set_sender_id("chen");
     message.set_receiver_id("user2");
-    message.mutable_timestamp()->set_seconds(time(NULL));
+    message.mutable_timestamp()->set_seconds(QDateTime::currentSecsSinceEpoch());
     message.set_type(MeetChat::MessageType::TEXT);
 
     MeetChat::TextMessage text_message;
@@ -50,38 +55,131 @@ void ChatWindow::sendTextMessage(const QString &msg)
     m_chatClient->send(message);
 }
 
+void ChatWindow::sendFileMessage(const QString &file_path)
+{
+    QFile file(file_path);
+    QFileInfo fileInfo(file.fileName());
+    QString fileName = fileInfo.fileName();
+    file.open(QIODevice::ReadOnly);
+    if(file.size() >= (long long)2 * 1024 * 1024 * 1024) // 2GB
+    {
+        qDebug() << "Too big, ignore file";
+        QMessageBox msgBox;
+        msgBox.setWindowTitle(Chinese("警告"));
+        msgBox.setText(Chinese("无法发送文件，文件太大 ( > 2GB )"));
+        msgBox.setIcon(QMessageBox::Warning);
+        msgBox.setStandardButtons(QMessageBox::Ok);
+        msgBox.exec(); // wait user to click
+        return ;
+    }
+    // file.readAll() only reads data less that 2GB
+    std::string data(file.readAll().toStdString());
+
+    MeetChat::File file_message;
+    file_message.set_name(fileName.toStdString());
+    file_message.set_size(file.size());
+    assert(file.size() == data.size());
+    file_message.set_data(data.data(), file.size());
+
+    google::protobuf::Any *any = new google::protobuf::Any;
+    bool f = any->PackFrom(file_message);
+    if(!f){
+        qDebug() << "packfrom error";
+        return ;
+    }
+
+    MeetChat::Message message;
+    message.set_sender_id("chenlang");
+    message.set_receiver_id("all");
+    message.mutable_timestamp()->set_seconds(QDateTime::currentSecsSinceEpoch());
+    message.set_type(MeetChat::MessageType::FILE);
+    message.set_allocated_data(any);
+
+    m_chatClient->send(message);
+}
+
 void ChatWindow::onProtoMessageReceived(MessagePtr base)
 {
     QSharedPointer<MeetChat::Message> message = base.dynamicCast<MeetChat::Message>();
-    if(!message){
-        qErrnoWarning("Can not up-cast to MeetChat::Message");
-    }
-    auto type = message->type();
-    google::protobuf::Any any = message->data();
-    MeetChat::TextMessage text_message;
-
-    switch (type) {
+    switch (message->type()) {
         case MeetChat::MessageType::TEXT:
-            // 消息类型为 TEXT
-            if (any.UnpackTo(&text_message)) {
-                std::string text = text_message.text();
-                addMessage(QString::fromStdString(text), QString::number(QDateTime::currentDateTime().toSecsSinceEpoch()), QNChatMessage::User_She);
-            } else {
-                // 无法解析出 TextMessage 对象，输出错误信息
-                std::cerr << "Invalid data for TEXT type\n";
-            }
+            onTextMessage(message);
+            break;
+        case MeetChat::MessageType::FILE:
+            onFileMessage(message);
             break;
         default:
-            // 未知的消息类型，输出错误信息
             std::cerr << "Unknown message type\n";
-    }
-
+        }
 }
 
-void ChatWindow::addMessage(QString text, QString timeSecsSinceUnixEpoch, QNChatMessage::User_Type userType)
+void ChatWindow::onTextMessage(QSharedPointer<MeetChat::Message> message)
 {
-    mayAddTimeTolistWidget(timeSecsSinceUnixEpoch);
-    addMessageItemTolistWidget(text, timeSecsSinceUnixEpoch, userType);
+    assert(message->type() == MeetChat::TEXT);
+    google::protobuf::Any any = message->data();
+    MeetChat::TextMessage text_message;
+    if (any.UnpackTo(&text_message)) {
+        std::string text = text_message.text();
+        qDebug() << QString::fromStdString(text);
+        displayTextMessage(QString::fromStdString(message->sender_id()),
+                           QString::fromStdString(text),
+                           QDateTime::currentSecsSinceEpoch(),
+                           TextMessage::OTHER);
+    } else {
+        // can not parse
+        std::cerr << "Can`t parse data to TEXT type\n";
+    }
+}
+
+void ChatWindow::onFileMessage(QSharedPointer<MeetChat::Message> message)
+{
+    assert(message->type() == MeetChat::FILE);
+    google::protobuf::Any any = message->data();
+    MeetChat::File file_message;
+    if (any.UnpackTo(&file_message)) {
+        qDebug() << "received file name: " << file_message.name().c_str();
+
+        QFile savefile(QString::fromStdString("./tmp/" + file_message.name()));
+        QDir dir("./tmp");
+        if (!dir.exists()) {
+            dir.mkpath("./");
+        }
+        savefile.open(QIODevice::WriteOnly);
+        savefile.write(file_message.data().data(), file_message.size());
+
+        QFileInfo file_info(QString::fromStdString(file_message.name()));
+        QFileIconProvider icon_provider;
+        QIcon icon = icon_provider.icon(file_info);
+        displayFileMessage(QString::fromStdString(message->sender_id()),
+                           icon.pixmap(10,10),
+                           file_info.fileName(),
+                           file_message.size(),
+                           QDateTime::currentSecsSinceEpoch(),
+                           FileMessage::OTHER);
+    } else {
+        std::cerr << "Can`t parse data to TEXT type\n";
+    }
+}
+
+void ChatWindow::displayTextMessage(const QString& title,
+                        const QString& text,
+                        qint64 timeSecsSinceUnixEpoch,
+                        TextMessage::TYPE userType)
+{
+    mayDisplayTimeMessage(timeSecsSinceUnixEpoch);
+
+    TextMessage* message = new TextMessage(userType, ui->listWidget);
+    QListWidgetItem* itemTime = new QListWidgetItem(ui->listWidget);
+
+    message->setContent(text);
+    message->setTitle(title);
+    message->setMsgTime(timeSecsSinceUnixEpoch);
+
+    QSize size = QSize(this->ui->listWidget->width(), message->height());
+    message->resize(size);
+    itemTime->setSizeHint(size);
+    ui->listWidget->setItemWidget(itemTime, message);
+
 }
 
 void ChatWindow::on_sendButton_clicked()
@@ -92,7 +190,11 @@ void ChatWindow::on_sendButton_clicked()
         ui->textInput->setPlaceholderText("can not send empty or blank message");
         return ;
     }
-    addMessage(msg, QString::number(QDateTime::currentDateTime().toSecsSinceEpoch()), QNChatMessage::User_Me);
+
+    displayTextMessage(Chinese("张三"),
+                       msg,
+                       QDateTime::currentSecsSinceEpoch(),
+                       TextMessage::ME);
     sendTextMessage(msg);
 
 }
@@ -106,24 +208,15 @@ void ChatWindow::on_fileButton_clicked()
     QFileInfo file_info(filepath);
     QFileIconProvider icon_provider;
     QIcon icon = icon_provider.icon(file_info);
+    displayFileMessage("chenl",
+                       icon.pixmap(10,10),
+                       file_info.fileName(),
+                       file_info.size(),
+                       QDateTime::currentSecsSinceEpoch(),
+                       FileMessage::ME);
 
-    //QTextCursor cursor = ui->textInput->textCursor();
-    //cursor.insertImage(icon.pixmap(64,64).toImage());
-//    // 创建一个QLabel对象
-//    QLabel *label = new QLabel();
-
-//    // 使用QIcon的pixmap()方法获取图片的QPixmap对象
-//    QPixmap pixmap = icon.pixmap(64, 64);
-
-//    // 使用QLabel的setPixmap()方法设置图片
-//    label->setPixmap(pixmap);
-
-//    // 显示QLabel对象
-//    label->show();
-
+    sendFileMessage(filepath);
 }
-
-
 
 void ChatWindow::on_videoButton_clicked()
 {
@@ -150,34 +243,58 @@ void ChatWindow::on_soundButton_clicked()
     }
 }
 
+void ChatWindow::displayTimeMessage(qint64 timeSecsSinceEpoch)
+{
+    TimeMessage* messageTime = new TimeMessage(ui->listWidget);
+    messageTime->setTime(timeSecsSinceEpoch);
+    QListWidgetItem* itemTime = new QListWidgetItem(ui->listWidget);
+
+    QSize size = QSize(this->ui->listWidget->width(), 30);
+    messageTime->resize(size);
+    itemTime->setSizeHint(size);
+    ui->listWidget->setItemWidget(itemTime, messageTime);
+}
+
+void ChatWindow::displayFileMessage(const QString& title,
+                                    const QPixmap& fileIcon,
+                                    const QString& file_name_str,
+                                    qint64 file_size_bytes,
+                                    qint64 timeSecsSinceUnixEpoch,
+                                    FileMessage::TYPE type)
+{
+    mayDisplayTimeMessage(timeSecsSinceUnixEpoch);
+
+    FileMessage* message = new FileMessage(type, ui->listWidget);
+    QListWidgetItem* itemfile = new QListWidgetItem(ui->listWidget);
+
+    message->setTitle(title);
+    message->setIcon(fileIcon);
+    message->setFileNameStr(file_name_str);
+    message->setFileSize(file_size_bytes);
+    message->setMsgTime(timeSecsSinceUnixEpoch);
+
+    QSize size = QSize(message->width(), 60);
+    message->resize(size);
+
+    itemfile->setSizeHint(size);
+    ui->listWidget->setItemWidget(itemfile, message);
+}
+
 void ChatWindow::connectEventSlots()
 {
     connect(m_chatClient.get(), SIGNAL(protobufMessage(MessagePtr)),
             this, SLOT(onProtoMessageReceived(MessagePtr)));
 }
 
-void ChatWindow::addMessageItemTolistWidget(QString text, QString SecsSinceUnixEpoch, QNChatMessage::User_Type userType)
-{
-    QNChatMessage::User_Type type = QNChatMessage::User_Me;
-    QNChatMessage* messageW = new QNChatMessage(ui->listWidget->parentWidget());
-    QListWidgetItem* item = new QListWidgetItem(ui->listWidget);
-    messageW->setFixedWidth(this->ui->listWidget->width());
-    QSize size = messageW->fontRect(text);
-    item->setSizeHint(size);
-    messageW->setText(text, SecsSinceUnixEpoch, size, userType);
-    ui->listWidget->setItemWidget(item, messageW);
-    messageW->setTextSuccess();
-}
-
-void ChatWindow::mayAddTimeTolistWidget(QString curMsgTime)
+void ChatWindow::mayDisplayTimeMessage(qint64 curMsgTimeSecsSinceEpoch)
 {
     bool showTime = false;
     // compare with previous sended message time
     if(ui->listWidget->count() > 0){
         QListWidgetItem* lastItem = ui->listWidget->item(ui->listWidget->count() - 1);
-        QNChatMessage* messageW = (QNChatMessage*)ui->listWidget->itemWidget(lastItem);
-        int lastTimeSecs = messageW->time().toInt();
-        int curTimeSecs = curMsgTime.toInt();
+        MessageCommon* messageW =  dynamic_cast<MessageCommon*>(ui->listWidget->itemWidget(lastItem));
+        int lastTimeSecs = messageW->msgTimeSecs();
+        int curTimeSecs = curMsgTimeSecsSinceEpoch;
         qDebug() << "curTime lastTime:" << curTimeSecs - lastTimeSecs;
         showTime = ((curTimeSecs - lastTimeSecs) > 60);
     }else{
@@ -185,13 +302,8 @@ void ChatWindow::mayAddTimeTolistWidget(QString curMsgTime)
         showTime = true;
     }
     if(showTime){
-        QNChatMessage* messageTime = new QNChatMessage(ui->listWidget->parentWidget());
-        QListWidgetItem* itemTime = new QListWidgetItem(ui->listWidget);
-
-        QSize size = QSize(this->ui->listWidget->width(), 40);
-        messageTime->resize(size);
-        itemTime->setSizeHint(size);
-        messageTime->setText(curMsgTime, curMsgTime, size, QNChatMessage::User_Time);
-        ui->listWidget->setItemWidget(itemTime, messageTime);
+        displayTimeMessage(curMsgTimeSecsSinceEpoch);
     }
 }
+
+

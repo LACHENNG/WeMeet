@@ -64,7 +64,7 @@ void TextMessage::textContentAdjust()
             int nNewHeigh = nArea / this->width();
             //5 是修正系数
             nNewHeigh = nNewHeigh < document->size().height()
-                            ? document->size().height() + 5: nNewHeigh; // + 5 ?
+                            ? document->size().height() + 25: nNewHeigh + 25; // + 5 ?
             editor->setFixedHeight(nNewHeigh);
             this->adjustSize();
 //nNewHeigh + ui->title_label->height());

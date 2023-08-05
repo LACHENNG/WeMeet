@@ -1,23 +1,123 @@
-﻿/* QSplitter样式 */
-QWight{
-    background-color: #ffffff;
+﻿/****************  chatwindow style  ***************/
+#textInput, #listWidget{
+    margin: 10px;
 }
+#horizontalLayout{
+    border-top: 2px dashed red; /* 设置上边框为2像素宽的红色虚线*/
+}
+
+#textInput{
+    border-bottom: none;
+}
+    /************** Splitter *********************/
 QSplitter {
     background-color: transparent; /* 背景透明 */
-    border: none; /* 无边框 */
+    border: none;
     width:5px;
-
 }
 
 QSplitter::handle {
-    border-radius: 5px; /* 分割条圆角 */
-
+    border-radius: 5px;
     background-color: #e3e3e3;
 }
 
-
-
 QSplitter::handle:hover {
-    background-color: #bdbdbd; /* 鼠标悬停时背景颜色 */
-/*      background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #a6a6a6, stop:1 #ffffff);*/
+    background-color: #bdbdbd;
 }
+    /************** ! Splitter ! *********************/
+
+/**************** ! chatwindow style ! ***************/
+
+QWight{
+    background-color: #ffffff;
+}
+
+#timeLabel{
+    color: rgb(153,153,153)
+}
+
+#label_title, #title_label{
+    color: rgb(153,153,153)
+}
+
+QTextEdit{
+    /*border: none;*/
+    border-radius: 5px 5px 0 0; /* 左上 右上 右下 左下 */
+    padding: 5px;
+    background: white;
+}
+#message_textEdit{
+    background: #add0fc;
+}
+
+/**************   QListWidget *********************/
+QListWidget {
+    show-decoration-selected: 1; /* make the selection span the entire width of the view */
+    border: none;
+    margin: 10px;
+}
+
+QListWidget::item:selected {
+    border: 1px solid white;
+}
+
+QListWidget::item:selected:!active {
+    background: none;
+}
+
+QListWidget::item:selected:active {
+    background: none;
+}
+
+QListWidget::item:hover {
+    background: white;
+}
+/**************  ! QListWidget ! *********************/
+
+
+
+
+/************** Srcoll bar in QListWidget *********************/
+
+QScrollBar:vertical {
+    border: none;
+    background: transparent;
+    width: 5px;
+    margin: 0px 0px 0px 0px;
+}
+
+QScrollBar::handle:vertical {
+    background: lightgray;
+    min-height: 20px;
+    border-radius: 2px;
+}
+QScrollBar::handle:vertical:hover {
+    background: gray;
+    border-radius: 5px;
+}
+
+
+QScrollBar::add-line:vertical {
+    height: 0px;
+    subcontrol-position: bottom;
+    subcontrol-origin: margin;
+}
+
+QScrollBar::sub-line:vertical {
+    height: 0px;
+    subcontrol-position: top;
+    subcontrol-origin: margin;
+}
+
+QScrollBar::up-arrow:vertical, QScrollBar::down-arrow:vertical {
+    border: none;
+    width: 0px;
+    height: 0px;
+    background: transparent;
+}
+
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+    background: none;
+}
+
+/************** ! Srcoll bar in QListWidget ! *********************/
