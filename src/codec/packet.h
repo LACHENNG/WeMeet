@@ -1,4 +1,4 @@
-// Author : Lance @ nwpu
+﻿// Author : Lance @ nwpu
 // Taken from LanceNet library
 // All rights reserved
 #pragma once
@@ -23,6 +23,11 @@
 // Note that Packet do not manage memory but parse from array or serialize to arrary in-place,
 // and it only hold pointers to user provided memory, make sure the data you provided outlives
 // packet
+
+// as we use a int32_t to represent message, the maximum payload is arround 2^31 - 1 = 2GB
+
+// FIXME: packProtoMessageToCachedSizeArray() may cause error when protomessage is too big
+// FIXME: checksum currently is ignored (not implemented)
 class Packet{
 private:
     Packet() : m_state(Uninstallized) {}

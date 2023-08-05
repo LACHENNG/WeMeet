@@ -23,11 +23,13 @@ QByteArray ProtobufCodec::encodeMessage(const Message &message)
 
 void ProtobufCodec::onRawBytes()
 {
+    static int i = 1;
+    qDebug() << i++ << " on Raw Bytes";
 
     // FIXME: performance issue
-    QByteArray buffer = peekBytes(m_tcpPtr->bytesAvailable());
-    while(Packet::canParseFromArray(buffer.data(), buffer.size()))
+    while(Packet::canParseFromArray(peekBytes(Packet::kHeaderLen).data(), this->m_tcpPtr->bytesAvailable()))
     {
+         QByteArray buffer =  m_tcpPtr->read( this->m_tcpPtr->bytesAvailable() );
         // parse a packet
         Packet packet = Packet::parseFromArray(buffer.data(),  buffer.size());
         // reflect a Message from packet
@@ -35,11 +37,7 @@ void ProtobufCodec::onRawBytes()
         const char* payload = packet.payload();
         MessagePtr message =
             makeProtoMessageFromProtodataArray(msgType, payload, packet.payloadLen());
-
         emit rawBytesDecoded(message);
-
-        hasRead(packet.byteSizeAll());
-        buffer = peekBytes(m_tcpPtr->bytesAvailable());
     }
 }
 

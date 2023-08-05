@@ -1,4 +1,4 @@
-#include "packet.h"
+﻿#include "packet.h"
 #include <google/protobuf/stubs/stringpiece.h>
 #include <google/protobuf/message.h>
 
@@ -8,18 +8,18 @@
 #include <winsock.h>
 
 
-bool Packet::canParseFromArray(const void* start, size_t len)
+bool Packet::canParseFromArray(const void* packet_header, size_t readableBytes)
 {
-    size_t readableBytes = len;
     if( readableBytes < kHeaderLen) return false;
 
-    int32_t belen = *static_cast<const int32_t*>(start);
-    int32_t msglen = ntohl(belen);
+    int32_t belen = *static_cast<const int32_t*>(packet_header);
+    int32_t payload_len = ntohl(belen);
     // FIXME
-    if(msglen < 0 || msglen > UINT16_MAX){
+    if(payload_len < 0 || payload_len > UINT32_MAX - 4){
+        qDebug() << "Invalid packet payload len = " << payload_len;
         return false;
     }
-    if(readableBytes < kHeaderLen + msglen){
+    if(readableBytes < kHeaderLen + payload_len){
         return false;
     }
 
@@ -88,7 +88,5 @@ bool Packet::packProtoMessageToCachedSizeArray(void * start, size_t buf_size, co
 
 size_t Packet::bytesAllToPack(const google::protobuf::Message &message)
 {
-
     return kHeaderLen + kMsgNameLen + kCheckSumLen + message.GetTypeName().size() + 1 + message.ByteSizeLong();
-
 }
