@@ -52,10 +52,10 @@ public:
     static Packet parseFromArray(const void *start, size_t len);
 
     // Pack a Protobuf::Message to user cached size array
-    static bool packProtoMessageToCachedSizeArray(void * start, size_t buf_size, const Message& message);
+    static bool packProtoMessageToCachedSizeArray(void * start, size_t buf_size, const ProtoMessage& message);
 
     // calc bytes total to pack a `Protobuf::Message` to `Packet`
-    static size_t bytesAllToPack(const Message& message);
+    static size_t bytesAllToPack(const ProtoMessage& message);
 
     // get packet header len in host byte order, has to be Parsed be this call
     int32_t headerLen() const { assert(m_state == Parsed); return ntohl(*m_headerBe32); }
@@ -78,7 +78,7 @@ public:
 
 private:
     // FIXME: imple adler32
-    static int32_t calcCheckSum(const StringPiece& messageTypeName, const Message& protoMessage) { return 0; }
+    static int32_t calcCheckSum(const StringPiece& messageTypeName, const ProtoMessage& protoMessage) { return 0; }
 
     // check if the packet has the right checksum
     // FIXME : imple

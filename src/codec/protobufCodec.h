@@ -1,5 +1,6 @@
-﻿// Author : Lance @ nwpu
-//
+﻿// Author : lang(Lance) @ nwpu transplus@foxmail.com
+// All rights reserved
+
 #pragma once
 
 #include <QObject>
@@ -8,6 +9,11 @@
 
 class TcpClient;
 
+// ProtobufCodec encodes(packs) a probuf::Message to Packet( see class Packet to see how the packet is designed)
+//    or decodes raw network bytes to Packet, then, further to probuf::Message ( emit rawBytesDecoded signal if
+//    a decoded probuf::Message is ready
+// ---raw bytes----> onRawBytes() -- > rawBytesDecoded(ProtoMessagePtr)
+// ---raw bytes-<--- encodeMessage(ProtoMessage)
 class ProtobufCodec : public QObject
 {
     Q_OBJECT
@@ -16,19 +22,18 @@ public:
     // create (reflect) a message by TypeName and decode the
     // binary data(which previously serialized by protobuf::Message::serialzexxx) to fill the Message
     // at protoData with lenght `size`
-    static MessagePtr makeProtoMessageFromProtodataArray(const StringPiece& msgType, const char* protoData, size_t size);
+    static ProtoMessagePtr makeProtoMessageFromProtodataArray(const StringPiece& msgType, const char* protoData, size_t size);
 
     ProtobufCodec(TcpClient* tcpclient);
 
     // note that return a empty QByteArray when fails
-    QByteArray encodeMessage(const Message& message);
+    QByteArray encodeMessage(const ProtoMessage& message);
 
 public slots:
     void onRawBytes();
 
 signals:
-
-    void rawBytesDecoded(MessagePtr);
+    void rawBytesDecoded(ProtoMessagePtr);
 
 private:
     // read and discared from QTcpSocket

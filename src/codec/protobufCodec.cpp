@@ -10,7 +10,7 @@ ProtobufCodec::ProtobufCodec(TcpClient *tcpclient)
 {
 }
 
-QByteArray ProtobufCodec::encodeMessage(const Message &message)
+QByteArray ProtobufCodec::encodeMessage(const ProtoMessage &message)
 {
     QByteArray buffer;
     buffer.resize(Packet::bytesAllToPack(message));
@@ -35,7 +35,7 @@ void ProtobufCodec::onRawBytes()
         // reflect a Message from packet
         const char* msgType = packet.messageTypeName();
         const char* payload = packet.payload();
-        MessagePtr message =
+        ProtoMessagePtr message =
             makeProtoMessageFromProtodataArray(msgType, payload, packet.payloadLen());
         emit rawBytesDecoded(message);
     }
@@ -54,13 +54,13 @@ QByteArray ProtobufCodec::peekBytes(qint64 n)
     return bytes;
 }
 
-MessagePtr ProtobufCodec::makeProtoMessageFromProtodataArray(const StringPiece &msgType, const char *protoData, size_t size)
+ProtoMessagePtr ProtobufCodec::makeProtoMessageFromProtodataArray(const StringPiece &msgType, const char *protoData, size_t size)
 {
     // using protobuf reflect to create Message
-    MessagePtr message;
+    ProtoMessagePtr message;
     const auto descriptor =  google::protobuf::DescriptorPool::generated_pool()->FindMessageTypeByName(msgType.begin());
     if(descriptor){
-        const Message* prototype =
+        const ProtoMessage* prototype =
             google::protobuf::MessageFactory::generated_factory()->GetPrototype(descriptor);
         if(prototype) message.reset(prototype->New());
     }

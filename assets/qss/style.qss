@@ -1,6 +1,6 @@
 ﻿/****************  chatwindow style  ***************/
 #textInput, #listWidget{
-    margin: 10px;
+    margin-left: 10px;
 }
 #horizontalLayout{
     border-top: 2px dashed red; /* 设置上边框为2像素宽的红色虚线*/
@@ -9,6 +9,11 @@
 #textInput{
     border-bottom: none;
 }
+/*#displayWidget{
+    margin: 30px;
+    padding: 30px;
+}*/
+
     /************** Splitter *********************/
 QSplitter {
     background-color: transparent; /* 背景透明 */

@@ -15,7 +15,7 @@ class StringPiece;
 }
 
 using StringPiece = google::protobuf::stringpiece_internal::StringPiece;
-using Message = google::protobuf::Message;
-using MessagePtr = QSharedPointer<Message>;
+using ProtoMessage = google::protobuf::Message;
+using ProtoMessagePtr = QSharedPointer<ProtoMessage>;
 
 #endif // PROTOBUF_FWD_H

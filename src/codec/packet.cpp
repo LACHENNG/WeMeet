@@ -51,7 +51,7 @@ Packet Packet::parseFromArray(const void *start, size_t len)
 }
 
 
-bool Packet::packProtoMessageToCachedSizeArray(void * start, size_t buf_size, const Message& message){
+bool Packet::packProtoMessageToCachedSizeArray(void * start, size_t buf_size, const ProtoMessage& message){
     std::string typeName = message.GetTypeName();
     int packetBytesAll = kHeaderLen + kMsgNameLen + kCheckSumLen + typeName.size() + 1 + message.ByteSizeLong(); // 1 for '\0'
     if(static_cast<int>(buf_size) < packetBytesAll){

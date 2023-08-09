@@ -15,10 +15,14 @@
 #include <ui/chatmessage/textmessage.h>
 #include <ui/chatmessage/filemessage.h>
 
+#include <opencv2/opencv.hpp>
+
 ChatWindow::ChatWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::ChatWindow),
-    m_chatClient(new TcpClient(Config::GetServerHostName(), Config::getServerPort(), parent))
+    m_chatClient(new TcpClient(Config::getInstance().GetServerHostName(),
+                               Config::getInstance().getServerPort(),
+                               parent))
 {
     ui->setupUi(this);
     ui->splitter->handle(1)->setAttribute(Qt::WA_Hover, true);
@@ -28,7 +32,7 @@ ChatWindow::ChatWindow(QWidget *parent)
     // construct CameraVideo after ui->setupUi
     m_cameraVideo = new CameraVideo(ui->displayWidget, 30, 0, parent),
     m_chatClient->start();
-    connectEventSlots();
+    connectEventSlotsOrCallbacks();
 }
 
 ChatWindow::~ChatWindow()
@@ -39,8 +43,8 @@ ChatWindow::~ChatWindow()
 void ChatWindow::sendTextMessage(const QString &msg)
 {
     MeetChat::Message message;
-    message.set_sender_id("chen");
-    message.set_receiver_id("user2");
+    message.set_sender_id(Config::getInstance().userId());
+    message.set_receiver_id("-1");
     message.mutable_timestamp()->set_seconds(QDateTime::currentSecsSinceEpoch());
     message.set_type(MeetChat::MessageType::TEXT);
 
@@ -89,7 +93,7 @@ void ChatWindow::sendFileMessage(const QString &file_path)
     }
 
     MeetChat::Message message;
-    message.set_sender_id("chenlang");
+    message.set_sender_id(Config::getInstance().userId());
     message.set_receiver_id("all");
     message.mutable_timestamp()->set_seconds(QDateTime::currentSecsSinceEpoch());
     message.set_type(MeetChat::MessageType::FILE);
@@ -98,9 +102,24 @@ void ChatWindow::sendFileMessage(const QString &file_path)
     m_chatClient->send(message);
 }
 
-void ChatWindow::onProtoMessageReceived(MessagePtr base)
+void ChatWindow::sendAVMessgae(const MeetChat::AVPacket &av_packet)
 {
-    QSharedPointer<MeetChat::Message> message = base.dynamicCast<MeetChat::Message>();
+    MeetChat::Message message;
+    message.set_sender_id(Config::getInstance().userId());
+    message.set_receiver_id("all");
+    message.mutable_timestamp()->set_seconds(QDateTime::currentSecsSinceEpoch());
+    message.set_type(MeetChat::MessageType::AV);
+
+    google::protobuf::Any *any = new google::protobuf::Any;
+    any->PackFrom(av_packet);
+    message.set_allocated_data(any);
+
+    m_chatClient->send(message);
+}
+
+void ChatWindow::onProtoMessageReceived(ProtoMessagePtr baseMessage)
+{
+    QSharedPointer<MeetChat::Message> message = baseMessage.dynamicCast<MeetChat::Message>();
     switch (message->type()) {
         case MeetChat::MessageType::TEXT:
             onTextMessage(message);
@@ -108,12 +127,15 @@ void ChatWindow::onProtoMessageReceived(MessagePtr base)
         case MeetChat::MessageType::FILE:
             onFileMessage(message);
             break;
+        case MeetChat::MessageType::AV:
+            onAVMessage(message);
+            break;
         default:
             std::cerr << "Unknown message type\n";
         }
 }
 
-void ChatWindow::onTextMessage(QSharedPointer<MeetChat::Message> message)
+void ChatWindow::onTextMessage(const QSharedPointer<MeetChat::Message> &message)
 {
     assert(message->type() == MeetChat::TEXT);
     google::protobuf::Any any = message->data();
@@ -131,7 +153,7 @@ void ChatWindow::onTextMessage(QSharedPointer<MeetChat::Message> message)
     }
 }
 
-void ChatWindow::onFileMessage(QSharedPointer<MeetChat::Message> message)
+void ChatWindow::onFileMessage(const QSharedPointer<MeetChat::Message>& message)
 {
     assert(message->type() == MeetChat::FILE);
     google::protobuf::Any any = message->data();
@@ -157,8 +179,15 @@ void ChatWindow::onFileMessage(QSharedPointer<MeetChat::Message> message)
                            QDateTime::currentSecsSinceEpoch(),
                            FileMessage::OTHER);
     } else {
-        std::cerr << "Can`t parse data to TEXT type\n";
+        std::cerr << "Can`t parse data to FILE type\n";
     }
+}
+
+void ChatWindow::onAVMessage(const QSharedPointer<MeetChat::Message>& message)
+{
+    assert(message->type() == MeetChat::AV);
+
+    this->m_cameraVideo->decodeAVPacket(message);
 }
 
 void ChatWindow::displayTextMessage(const QString& title,
@@ -191,7 +220,7 @@ void ChatWindow::on_sendButton_clicked()
         return ;
     }
 
-    displayTextMessage(Chinese("张三"),
+    displayTextMessage(QString::fromStdString(Config::getInstance().userId()),
                        msg,
                        QDateTime::currentSecsSinceEpoch(),
                        TextMessage::ME);
@@ -280,10 +309,31 @@ void ChatWindow::displayFileMessage(const QString& title,
     ui->listWidget->setItemWidget(itemfile, message);
 }
 
-void ChatWindow::connectEventSlots()
+void ChatWindow::connectEventSlotsOrCallbacks()
 {
-    connect(m_chatClient.get(), SIGNAL(protobufMessage(MessagePtr)),
-            this, SLOT(onProtoMessageReceived(MessagePtr)));
+    connect(m_chatClient.get(), SIGNAL(protobufMessage(ProtoMessagePtr)),
+            this, SLOT(onProtoMessageReceived(ProtoMessagePtr)));
+    this->m_cameraVideo->setOnFrameEncodedCallback([this](const MeetChat::AVPacket& data){
+        // send to peer
+        this->sendAVMessgae(data);
+    });
+    this->m_cameraVideo->setOnPacketDecodedCallback([this](const MessageContext& ctx, const AVFrame* m_video_frame){
+        auto * sws_ctx = this->m_cameraVideo->getSwsCtx();
+
+        // AVFrame --> cv::Mat
+        cv::Mat mat(m_video_frame->height, m_video_frame->width, CV_8UC3);
+        uint8_t* data[AV_NUM_DATA_POINTERS] = {0};
+        data[0] = mat.data;
+        int linesize[AV_NUM_DATA_POINTERS] = {0};
+        linesize[0] = mat.cols * mat.channels();
+        sws_scale(const_cast<SwsContext*>(sws_ctx), m_video_frame->data, m_video_frame->linesize,
+                  0, m_video_frame->height, data, linesize);
+        // show
+        cv::imshow(ctx.getReceiver_id() + " " + ctx.getSender_id() + " ", mat);
+        cv::waitKey(1);
+
+    });
+
 }
 
 void ChatWindow::mayDisplayTimeMessage(qint64 curMsgTimeSecsSinceEpoch)

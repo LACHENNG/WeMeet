@@ -15,6 +15,17 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 find_package(Qt5 REQUIRED COMPONENTS Widgets Network gui core  ) # opengl
 
+# Proto file
+# Generated sources
+set(proto_srcs "${CMAKE_CURRENT_SOURCE_DIR}/src/protoc/message.pb.cc")
+set(proto_hdrs "${CMAKE_CURRENT_SOURCE_DIR}/src/protoc/message.pb.h")
+add_custom_command(
+    OUTPUT "${proto_srcs}" "${proto_hdrs}"
+    COMMAND protoc
+    ARGS  --cpp_out "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/src/protoc/message.proto"
+        -I "${CMAKE_CURRENT_SOURCE_DIR}"
+    DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/protoc/message.proto"
+)
 
 ######################Protobuf related ############################
 set(Protobuf_INCLUDE_DIRS "D:/Software/install/protobuf3.20.0Debug/include")
@@ -35,6 +46,29 @@ include_directories(${OpenCV_inCLUDE_DIRS})
 message("\nOpenCV_INCLUDE_DIRS: " ${OpenCV_INCLUDE_DIRS} "\n")
 #message("OpenCV_LIBS: " ${OpenCV_LIBS})
 ######################!OpenCV related! ############################
+
+
+######################  ffmpeg related ############################
+set(ffmpeg_INCLUDE_DIRS "D:/Software/install/ffmpeg6.0/include")
+set(ffmpeg_LINK_DIRS "D:/Software/install/ffmpeg6.0/lib/")
+set(ffmpeg_LIBRARIES swscale.lib avformat.lib avfilter.lib avdevice.lib avcodec.lib avutil.lib)
+
+
+include_directories(${ffmpeg_INCLUDE_DIRS})
+link_directories(${ffmpeg_LINK_DIRS})
+######################! ffmpeg related ! ############################
+
+
+
+
+######################  Opus related ############################
+find_package(Opus  REQUIRED
+             PATHS "D:/Software/install/opus/lib/cmake/Opus"  # do not use chinese characters in path
+             NO_DEFAULT_PATH )
+include_directories(${OPUS_INCLUDE_DIRS})
+
+######################! Opus related ! ############################ D:\Software\install\opus-1.4\cmake
+
 
 set(PROJECT_SOURCES
     main.cpp
@@ -61,6 +95,10 @@ set(PROJECT_SOURCES
     src/config.h
     src/cameravideo.h
     src/cameravideo.cpp
+    src/mediacodec.h
+    src/mediacodec.cpp
+    src/avmessagemuxer.h
+    src/avmessagemuxer.cpp
 
     src/codec/packet.cpp
     src/codec/packet.h
@@ -85,6 +123,9 @@ target_link_libraries(ChatClient PRIVATE
     ${OpenCV_LIBS}
     ${Protobuf_LIBRARIES}
     ws2_32 # winsock2
+    ${x264_LIBRARIES}
+    ${OPUS_LIBRARIES}
+    ${ffmpeg_LIBRARIES}
 )
 
 set_target_properties(ChatClient PROPERTIES

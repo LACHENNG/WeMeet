@@ -20,6 +20,7 @@ QT_END_NAMESPACE
 class TcpClient;
 class QListWidgetItem;
 class CameraVideo;
+class MediaCodec;
 namespace cv { class VideoCapture; };
 
 class ChatWindow : public QMainWindow
@@ -51,12 +52,17 @@ private slots:
     void sendTextMessage(const QString& msg);
     // send file only less than 2GB, due to the implementation
     void sendFileMessage(const QString& file_path);
+    // send Audio/Video
+    void sendAVMessgae(const MeetChat::AVPacket& av_packet);
 
     // On protobuf::Message data  arrived
-    void onProtoMessageReceived(MessagePtr msg);
+    void onProtoMessageReceived(ProtoMessagePtr msg);
     // Dispatching MeetChat::message
-    void onTextMessage(QSharedPointer<MeetChat::Message> message);
-    void onFileMessage(QSharedPointer<MeetChat::Message> message);
+    void onTextMessage(const QSharedPointer<MeetChat::Message>& message);
+    void onFileMessage(const QSharedPointer<MeetChat::Message>& message);
+    // on undecoded data
+    void onAVMessage(const QSharedPointer<MeetChat::Message>& message);
+
 
     void on_sendButton_clicked();
     void on_fileButton_clicked();
@@ -64,16 +70,13 @@ private slots:
     void on_soundButton_clicked();
 
 private slots:
-
-
-
     // all event connect related stuff is done here
-    void connectEventSlots();
+    void connectEventSlotsOrCallbacks();
 
 private:
     Ui::ChatWindow*ui;
-    CameraVideo* m_cameraVideo;
-    QScopedPointer<TcpClient> m_chatClient;
+    CameraVideo* m_cameraVideo;             // vidio and audio ecodec and display
+    QScopedPointer<TcpClient> m_chatClient; // handle data sending(encoding) and receiving(decoding)
 };
 
 #endif // CHATWINDOW_H

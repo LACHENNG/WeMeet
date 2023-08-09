@@ -1,4 +1,5 @@
 syntax = "proto3";
+
 package MeetChat;
 // 导入一些公共的 protobuf 类型
 import "google/protobuf/any.proto";
@@ -10,7 +11,7 @@ enum MessageType {
   EMOJI = 1; // 表情消息
   IMAGE = 2; // 图片消息
   FILE = 3; // 文件消息
-  VIDEO = 4; // 视频帧消息
+  AV = 4; // 音视频消息
 }
 
 // 定义一个通用的消息类型，可以包含不同类型的数据
@@ -27,15 +28,19 @@ message Message {
   google.protobuf.Any data = 5;
 }
 
-// 定义一个视频帧类型，包含帧序号、时间戳和图像数据
-message VideoFrame {
-  // 帧的序号
-  int32 frame_number = 1;
-  // 帧的时间戳
-  google.protobuf.Timestamp timestamp = 2;
-  // 帧的图像数据，可以是任何编码格式，例如 JPEG 或 H.264
-  bytes image_data = 3;
+
+// 定义一个AVPacket消息类型，用于存储音视频数据
+message AVPacket {
+  int32 stream_index = 2; // 音视频数据的索引
+  int64 pts = 3; // 显示时间戳
+  int64 dts = 4; // 解码时间戳
+  bytes data = 5; // 压缩数据
+  int32 size = 6; // 压缩数据的长度
+  int32 flags = 7; // 标志位
+  int64 pos = 8; // 在输入文件中的位置
+  int64 duration = 9; // 时长
 }
+
 
 // 定义一个文字消息类型，包含文本内容
 message TextMessage {

@@ -7,15 +7,37 @@
 
 class Config
 {
-public:
+private:
     Config(const QString& filePath = "./config/config.txt");
 
-    static QString GetServerHostName(){
+    Config(const Config& that) = delete;
+    Config& operator=(const Config& that) = delete;
+
+public:
+    // singleton, do not delete
+    static Config& getInstance(){
+        static Config config;
+        return config;
+    }
+
+    QString GetServerHostName(){
         return "172.29.167.72"; // WSL2 in my local machine
     }
 
-    static quint16 getServerPort(){
+    quint16 getServerPort(){
         return 2345;
+    }
+
+    std::string userName(){
+        return "chenlang";
+    }
+
+    std::string userId(){
+        return "12255643";
+    }
+
+    auto cameraIdx(){
+        return 0;
     }
 
 private:

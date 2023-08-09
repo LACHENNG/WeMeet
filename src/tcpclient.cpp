@@ -30,7 +30,7 @@ void TcpClient::start()
      this->connectToHost(peerName(), peerPort());
 }
 
-void TcpClient::OnMessage(MessagePtr message)
+void TcpClient::OnMessage(ProtoMessagePtr message)
 {
      if(!message){
          qDebug() << "invalid protobuf message, discarded...";
@@ -80,8 +80,8 @@ void TcpClient::connectEventSlots()
             this, SLOT(OnDisConnected()));
     connect(this, SIGNAL(readyRead()),
             m_codec.get(), SLOT(onRawBytes()));
-    connect(m_codec.get(), SIGNAL(rawBytesDecoded(MessagePtr)),
-            this, SLOT(OnMessage(MessagePtr)) );
+    connect(m_codec.get(), SIGNAL(rawBytesDecoded(ProtoMessagePtr)),
+            this, SLOT(OnMessage(ProtoMessagePtr)) );
 }
 
 

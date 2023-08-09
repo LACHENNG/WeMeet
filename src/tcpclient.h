@@ -12,7 +12,8 @@
 class ProtobufCodec;
 
 // provide core events callbacks in network programing
-// use to send and receive data from peer
+//    eg. OnConnect, OnDissConnect, OnMessage
+// Also provide fuctionality to send probuf::Message data to peer
 class TcpClient : public QTcpSocket
 {
     Q_OBJECT
@@ -24,24 +25,23 @@ public:
     void start();
 
 public slots:
-    void OnMessage(MessagePtr message);
+    void OnMessage(ProtoMessagePtr message);
     void OnConnected();
     void OnDisConnected();
-    // sending
-    void send(const Message& msg);
+
+    void send(const ProtoMessage& msg);
 
 signals:
     // signal GUI
-    void protobufMessage(MessagePtr message);
+    void protobufMessage(ProtoMessagePtr message);
 
 private slots:
     void onError(QAbstractSocket::SocketError);
 
 private:
     void connectEventSlots();
-
+    // use to pack probuf::Message to Packet or unpack Packet to probuf::Message
     std::unique_ptr<ProtobufCodec> m_codec;
-
 };
 
 #endif // TCPCLIENT_H
