@@ -14,7 +14,7 @@ CameraVideo::CameraVideo(QWidget* showWhere, int fps, int cameraIdx,  QWidget *p
     m_cameraIdx(cameraIdx),
     m_pixmapLable(new QLabel(showWhere)),
     m_timerCameraFrame(new QTimer(parent)),
-    m_cap(new cv::VideoCapture(Config::getInstance().cameraIdx())),
+    m_cap(new cv::VideoCapture(std::stoi(Config::getInstance().get("cameraIdx")))),
     m_mediaCodec(new MediaCodec(MediaCodec::USE_AS_ENCODER)),
     m_mediaDecoder(new AVDecoderMuxer())
 {

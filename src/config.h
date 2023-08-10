@@ -1,53 +1,44 @@
-﻿#ifndef CONFIG_H
+﻿// Author : lang @ nwpu
+// All rights reserved
+
+#ifndef CONFIG_H
 #define CONFIG_H
 
-#include <QString>
-#include <QTypeInfo>
-#include <QtGlobal>
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <map>
 
-class Config
-{
+// Used to store and load key:values in config.txt
+// Also support set values at runtime
+// It is a singleton
+class Config {
 private:
-    Config(const QString& filePath = "./config/config.txt");
-
-    Config(const Config& that) = delete;
-    Config& operator=(const Config& that) = delete;
-
+    Config(const std::string& filename);
+    Config(const Config&) = delete;
+    Config& operator=(const Config&) = delete;
 public:
-    // singleton, do not delete
     static Config& getInstance(){
-        static Config config;
+        static Config config("config.txt");
         return config;
     }
 
-    QString GetServerHostName(){
-        return " 172.29.138.153"; // WSL2 in my local machine
-    }
-
-    quint16 getServerPort(){
-        return 2345;
-    }
-
-    std::string userName(){
-        return m_userName;
-    }
-
-    std::string userId(){
-        return m_userId;
-    }
-
-    auto cameraIdx(){
-        return 0;
-    }
-
-    void setUserId(const std::string &newUserId);
-    void setUserName(const std::string &newUesrName);
-
 private:
-    std::string m_userId;
-    std::string m_userName;
+    std::map<std::string, std::string> data;
 
-    QString m_configFilePath;
+public:
+    // trim blanks of strings
+    std::string trim(const std::string& s);
+
+    // get a value of key, return default value if not exist
+    std::string get(const std::string& key, const std::string& default_value = "");
+
+    // set value of a key ( existed one will be updated, insert otherwise)
+    void set(const std::string& key, const std::string& value);
+
+    // print all key:value stored or setted
+    // useful for debuging
+    void print();
 };
 
 #endif // CONFIG_H

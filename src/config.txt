@@ -1,0 +1,12 @@
+# config.txt stores the config necessary to run this chat client
+# comment start with #
+# each line mush be the form key:value , otherwise it can`t be parsed 
+# empty line is skiped 
+
+# 服务器的ipv4地址和端口
+server_address: 172.29.138.153
+server_port:2345
+
+# 默认打开的摄像头（ 0 表示第一个，或者默认摄像头 ）
+cameraIdx:0
+

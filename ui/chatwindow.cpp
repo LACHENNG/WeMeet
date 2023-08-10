@@ -20,8 +20,8 @@
 ChatWindow::ChatWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::ChatWindow),
-    m_chatClient(new TcpClient(Config::getInstance().GetServerHostName(),
-                               Config::getInstance().getServerPort(),
+    m_chatClient(new TcpClient(QString::fromStdString(Config::getInstance().get("server_address")),
+                               stoi(Config::getInstance().get("server_port")),
                                parent))
 {
     ui->setupUi(this);
@@ -43,7 +43,7 @@ ChatWindow::~ChatWindow()
 void ChatWindow::sendTextMessage(const QString &msg)
 {
     MeetChat::Message message;
-    message.set_sender_id(Config::getInstance().userId());
+    message.set_sender_id(Config::getInstance().get("userId"));
     message.set_receiver_id("-1");
     message.mutable_timestamp()->set_seconds(QDateTime::currentSecsSinceEpoch());
     message.set_type(MeetChat::MessageType::TEXT);
@@ -93,7 +93,7 @@ void ChatWindow::sendFileMessage(const QString &file_path)
     }
 
     MeetChat::Message message;
-    message.set_sender_id(Config::getInstance().userId());
+    message.set_sender_id(Config::getInstance().get("userId"));
     message.set_receiver_id("all");
     message.mutable_timestamp()->set_seconds(QDateTime::currentSecsSinceEpoch());
     message.set_type(MeetChat::MessageType::FILE);
@@ -105,7 +105,7 @@ void ChatWindow::sendFileMessage(const QString &file_path)
 void ChatWindow::sendAVMessgae(const MeetChat::AVPacket &av_packet)
 {
     MeetChat::Message message;
-    message.set_sender_id(Config::getInstance().userId());
+    message.set_sender_id(Config::getInstance().get("userId"));
     message.set_receiver_id("all");
     message.mutable_timestamp()->set_seconds(QDateTime::currentSecsSinceEpoch());
     message.set_type(MeetChat::MessageType::AV);
@@ -220,7 +220,7 @@ void ChatWindow::on_sendButton_clicked()
         return ;
     }
 
-    displayTextMessage(QString::fromStdString(Config::getInstance().userId()),
+    displayTextMessage(QString::fromStdString(Config::getInstance().get("userId")),
                        msg,
                        QDateTime::currentSecsSinceEpoch(),
                        TextMessage::ME);

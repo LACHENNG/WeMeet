@@ -34,20 +34,16 @@ void LoginDialog::on_login_button_clicked()
     {
         std::hash<std::string> hashFunc;
 //        Config::getInstance().setUserId(std::to_string(hashFunc(userName.toStdString()) %1000));
-        Config::getInstance().setUserId(userName.toStdString());
-        Config::getInstance().setUserName(ui->user_lineEdit->text().toStdString());
-        qDebug() << "set id: " << Config::getInstance().userId().c_str();
-        qDebug() << "user name: " << Config::getInstance().userName().c_str();
-
+        Config::getInstance().set("userName", userName.toStdString());
+        Config::getInstance().set("userId", userName.toStdString());
         accept(); // login success
     }else{
         QMessageBox::warning(this, Chinese("警告！"),
                Chinese("用户名或密码错误！"),
                              QMessageBox::Yes);
-        // 清空内容
         ui->user_lineEdit->clear();
         ui->pwd_lineEdit->clear();
-        //定位光标
+
         ui->user_lineEdit->setFocus();
     }
 }
