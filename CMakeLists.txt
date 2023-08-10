@@ -30,7 +30,7 @@ add_custom_command(
 ######################Protobuf related ############################
 set(Protobuf_INCLUDE_DIRS "D:/Software/install/protobuf3.20.0Debug/include")
 set(Protobuf_LINK_DIRS "D:/Software/install/protobuf3.20.0Debug/lib/")
-set(Protobuf_LIBRARIES libprotobufd.lib )
+set(Protobuf_LIBRARIES libprotobufd.lib ) #libprotobufd
 # FIXME use target_include_directories and target_link_directories instead
 include_directories(${Protobuf_INCLUDE_DIRS})
 link_directories(${Protobuf_LINK_DIRS})
@@ -44,7 +44,7 @@ find_package(OpenCV  REQUIRED
              NO_DEFAULT_PATH )
 include_directories(${OpenCV_inCLUDE_DIRS})
 message("\nOpenCV_INCLUDE_DIRS: " ${OpenCV_INCLUDE_DIRS} "\n")
-#message("OpenCV_LIBS: " ${OpenCV_LIBS})
+message("OpenCV_LIBS:+++++++++++ " ${OpenCV_LIBRARYS})
 ######################!OpenCV related! ############################
 
 
@@ -73,6 +73,10 @@ include_directories(${OPUS_INCLUDE_DIRS})
 set(PROJECT_SOURCES
     main.cpp
     assets/img.qrc
+
+    ui/logindialog.cpp
+    ui/logindialog.h
+    ui/logindialog.ui
 
     ui/chatwindow.cpp
     ui/chatwindow.h

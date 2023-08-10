@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>LoginDialog</class>
+ <widget class="QDialog" name="LoginDialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>356</width>
+    <height>211</height>
+   </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="windowTitle">
+   <string>MeetChat云会议</string>
+  </property>
+  <widget class="QLabel" name="label">
+   <property name="geometry">
+    <rect>
+     <x>40</x>
+     <y>47</y>
+     <width>60</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="minimumSize">
+    <size>
+     <width>60</width>
+     <height>0</height>
+    </size>
+   </property>
+   <property name="text">
+    <string>用户名</string>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_2">
+   <property name="geometry">
+    <rect>
+     <x>40</x>
+     <y>101</y>
+     <width>60</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="minimumSize">
+    <size>
+     <width>60</width>
+     <height>0</height>
+    </size>
+   </property>
+   <property name="text">
+    <string>密码</string>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="user_lineEdit">
+   <property name="geometry">
+    <rect>
+     <x>120</x>
+     <y>47</y>
+     <width>183</width>
+     <height>28</height>
+    </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="pwd_lineEdit">
+   <property name="geometry">
+    <rect>
+     <x>120</x>
+     <y>101</y>
+     <width>183</width>
+     <height>28</height>
+    </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="login_button">
+   <property name="geometry">
+    <rect>
+     <x>100</x>
+     <y>163</y>
+     <width>50</width>
+     <height>30</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>登入</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="register_button">
+   <property name="geometry">
+    <rect>
+     <x>203</x>
+     <y>163</y>
+     <width>50</width>
+     <height>30</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>注册</string>
+   </property>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

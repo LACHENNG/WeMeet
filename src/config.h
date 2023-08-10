@@ -21,7 +21,7 @@ public:
     }
 
     QString GetServerHostName(){
-        return "172.29.167.72"; // WSL2 in my local machine
+        return " 172.29.138.153"; // WSL2 in my local machine
     }
 
     quint16 getServerPort(){
@@ -29,18 +29,24 @@ public:
     }
 
     std::string userName(){
-        return "chenlang";
+        return m_userName;
     }
 
     std::string userId(){
-        return "12255643";
+        return m_userId;
     }
 
     auto cameraIdx(){
         return 0;
     }
 
+    void setUserId(const std::string &newUserId);
+    void setUserName(const std::string &newUesrName);
+
 private:
+    std::string m_userId;
+    std::string m_userName;
+
     QString m_configFilePath;
 };
 
