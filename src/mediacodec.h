@@ -9,16 +9,17 @@ extern "C"{
 #include <libavformat/avformat.h>
 #include <libswscale/swscale.h>
 #include <libavutil/imgutils.h>
+#include <libavutil/opt.h>
 };
 
 #include <src/protoc/message.pb.h>
 
 namespace cv { class VideoCapture; class Mat; };
 
-#define VIDEO_WIDTH 640
-#define VIDEO_HEIGHT 480
+#define VIDEO_WIDTH 1024
+#define VIDEO_HEIGHT 720
 #define VIDEO_FPS 30
-#define VIDEO_BIT_RATE 400000    // bit rate of video
+#define VIDEO_BIT_RATE 4000000    // bit rate of video
 #define VIDEO_GOP_SIZE 10        // video key frame(I frame) interval, gap(#frames) between two I frames
 #define AUDIO_SAMPLE_RATE 44100
 #define AUDIO_CHANNELS 2
@@ -66,6 +67,14 @@ public:
     // return a sws_ctx which you can use it to transfer AVFrame-->vc::Mat
     // by sws_scale(m_sws_ctx,...)
     SwsContext* getSwsCtx() { return m_sws_ctx; };
+
+    // convert cv::Mat to AvFrame using given SwsContext
+    // if sws_ctx is left null, cv::Mat(assume BGR24 format) is convert to AVFrame (YUV420 format)
+    static void cvMat2AVFrame(const cv::Mat& inMat, AVFrame* out_video_frame, SwsContext* sws_ctx = nullptr);
+
+    // convert AvFrame to cv::Mat using given SwsContext
+    // if sws_ctx is left null, AVFrame (assume YUV420 format) is convert to cv::Mat(BGR24)
+    static void avFrame2cvMat(const cv::Mat& out_Mat, AVFrame* in_frame, SwsContext* sws_ctx = nullptr);
 
 private:
     USE_PURPOSE m_usePurpose;

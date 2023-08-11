@@ -16,6 +16,8 @@
 #include <ui/chatmessage/filemessage.h>
 
 #include <opencv2/opencv.hpp>
+#include <QDesktopWidget>
+#include <src/mediacodec.h>
 
 ChatWindow::ChatWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -30,9 +32,14 @@ ChatWindow::ChatWindow(QWidget *parent)
     ui->listWidget->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
 
     // construct CameraVideo after ui->setupUi
-    m_cameraVideo = new CameraVideo(ui->displayWidget, 30, 0, parent),
+    m_cameraVideo = new CameraVideo(ui->displayWidget, 30, parent),
     m_chatClient->start();
+
+    this->setWindowTitle(Chinese("MeetChat 欢迎 @ ") + QString::fromStdString(Config::getInstance().get("userId")));
     connectEventSlotsOrCallbacks();
+
+    centralizeThisWind(390, 620);
+
 }
 
 ChatWindow::~ChatWindow()
@@ -237,7 +244,7 @@ void ChatWindow::on_fileButton_clicked()
     QFileInfo file_info(filepath);
     QFileIconProvider icon_provider;
     QIcon icon = icon_provider.icon(file_info);
-    displayFileMessage("chenl",
+    displayFileMessage(QString::fromStdString(Config::getInstance().get("userId")),
                        icon.pixmap(10,10),
                        file_info.fileName(),
                        file_info.size(),
@@ -249,14 +256,21 @@ void ChatWindow::on_fileButton_clicked()
 
 void ChatWindow::on_videoButton_clicked()
 {
-    static qint64 i = -1; i++;
-    // open camera
-    if(i % 2 == 0){
-        ui->videoButton->setText(QString::fromLocal8Bit("关闭视频"));
-        m_cameraVideo->startCap();
-    }else{ // close camera
-        ui->videoButton->setText(QString::fromLocal8Bit("开启视频"));
+    enum Status{opened, closed};
+    static Status status = closed;
+
+    if(status == opened){ // current state is opend, try to close
+
         m_cameraVideo->stopCap();
+        status = closed;
+        ui->videoButton->setText(QString::fromLocal8Bit("开启视频"));
+        return;
+    }
+    // current state is closed, try to open
+    bool f = m_cameraVideo->startCap();
+    if(f){
+        ui->videoButton->setText(QString::fromLocal8Bit("关闭视频"));
+        status = opened;
     }
 }
 
@@ -318,22 +332,33 @@ void ChatWindow::connectEventSlotsOrCallbacks()
         this->sendAVMessgae(data);
     });
     this->m_cameraVideo->setOnPacketDecodedCallback([this](const MessageContext& ctx, const AVFrame* m_video_frame){
-        auto * sws_ctx = this->m_cameraVideo->getSwsCtx();
+        cv::Mat output_mat(m_video_frame->height, m_video_frame->width, CV_8UC3);
+        MediaCodec::avFrame2cvMat(output_mat, const_cast<AVFrame*>(m_video_frame));
 
-        // AVFrame --> cv::Mat
-        cv::Mat mat(m_video_frame->height, m_video_frame->width, CV_8UC3);
-        uint8_t* data[AV_NUM_DATA_POINTERS] = {0};
-        data[0] = mat.data;
-        int linesize[AV_NUM_DATA_POINTERS] = {0};
-        linesize[0] = mat.cols * mat.channels();
-        sws_scale(const_cast<SwsContext*>(sws_ctx), m_video_frame->data, m_video_frame->linesize,
-                  0, m_video_frame->height, data, linesize);
-        // show
-        cv::imshow(ctx.getReceiver_id() + " " + ctx.getSender_id() + " ", mat);
-        cv::waitKey(1);
+        static QLabel img_lable;
+        QImage image= QImage((const unsigned char*)(output_mat.data), output_mat.cols, output_mat.rows,
+                              QImage::Format_RGB888).rgbSwapped();
 
+        img_lable.setPixmap(QPixmap::fromImage(image)
+                                     .scaledToWidth(640, Qt::SmoothTransformation));
+
+        img_lable.resize(640,480);
+        img_lable.setWindowTitle(  Chinese("我【") + QString::fromStdString(Config::getInstance().get("userName"))+ Chinese("】")
+                                 + Chinese("正在观看来自 【") + QString::fromStdString(ctx.getSender_id()) + Chinese("】的视频分享"));
+        img_lable.show();
     });
 
+}
+
+void ChatWindow::centralizeThisWind(int height, int width)
+{
+    int screen_width = QApplication::desktop()->width();
+    int screen_height = QApplication::desktop()->height();
+
+    int x = (screen_width - 620) / 2;
+    int y = (screen_height - 390) / 2;
+
+    this->setGeometry(x, y, 620, 390);
 }
 
 void ChatWindow::mayDisplayTimeMessage(qint64 curMsgTimeSecsSinceEpoch)

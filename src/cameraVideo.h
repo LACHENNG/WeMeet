@@ -29,19 +29,17 @@ class MediaCodec;
 class CameraVideo : public QObject{
     Q_OBJECT
 public :
-    CameraVideo(QWidget* showWhere = nullptr, int fps = 30,
-                int cameraIdx = 0, QWidget *parent = nullptr);
+    CameraVideo(QWidget* showWhere = nullptr, int fps = 30, QWidget *parent = nullptr);
     ~CameraVideo();
 
 public:
     using OnFrameEncodedCallback = std::function<void (const MeetChat::AVPacket&)>;
     using OnAVPacketDecodedCallback = std::function<void (const MessageContext&, const AVFrame*)>;
     // start capture and send camera frame
-    void startCap();
+    // return true if success
+    bool startCap();
     void stopCap();
     void setFps(int Fps);
-    // set camera index (0 for the default, first camera)
-    void setCameraIdx(int idx);
 
     void setOnFrameEncodedCallback(const OnFrameEncodedCallback& cb);
     void setOnPacketDecodedCallback(const OnAVPacketDecodedCallback& cb);
@@ -57,6 +55,8 @@ public:
     // by using sws_scale(m_sws_ctx,...)
     const SwsContext* getSwsCtx() const;
 
+    void displayCVMat(const cv::Mat& in_mat, QWidget * show_where);
+
 private slots:
     // process single frame capture from camera
     // timeout function for QTimer
@@ -70,8 +70,8 @@ private:
     int m_cameraIdx;
     QLabel* m_pixmapLable = nullptr;
     QTimer* m_timerCameraFrame = nullptr;
-    cv::VideoCapture* m_cap = nullptr;
-    MediaCodec* m_mediaCodec = nullptr;
+    std::unique_ptr<cv::VideoCapture> m_cap;
+    std::unique_ptr<MediaCodec> m_mediaCodec;
     std::unique_ptr<AVDecoderMuxer> m_mediaDecoder;
 };
 

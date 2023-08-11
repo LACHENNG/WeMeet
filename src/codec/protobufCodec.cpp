@@ -25,7 +25,7 @@ void ProtobufCodec::onRawBytes()
 {
     //FIXME: this may helpful to use to implement progress bar? eg. on file download or so?
     static int i = 1;
-    qDebug() << i++ << " on Raw Bytes";
+    // qDebug() << i++ << " on Raw Bytes";
 
     while(Packet::canParseFromArray(peekBytes(Packet::kHeaderLen).data(), this->m_tcpPtr->bytesAvailable()))
     {

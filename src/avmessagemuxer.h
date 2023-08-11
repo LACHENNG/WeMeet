@@ -38,6 +38,7 @@ private:
 
 // A wrapper to MediaCodec
 // which provide more info(MessageContext exactly) pass to onDecodedCallback
+// to konw whose(identified by MessageContext) packet is decoded
 class AVDecoderMuxer{
 public:
     using OnAVPacketDecodedCallback = std::function<void (const MessageContext&, const AVFrame*)>;

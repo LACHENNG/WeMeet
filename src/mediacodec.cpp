@@ -1,5 +1,9 @@
 ﻿#include "mediacodec.h"
+#include "qimage.h"
+#include "ui/chatwindow.h"
 #include <QDebug>
+#include <QLabel>
+#include <QVBoxLayout>
 #include <opencv2/opencv.hpp>
 
 int32_t MediaCodec::init()
@@ -35,8 +39,14 @@ int32_t MediaCodec::init()
     m_video_codec_ctx->framerate = {VIDEO_FPS, 1}; // 设置视频帧率
     m_video_codec_ctx->bit_rate = VIDEO_BIT_RATE; // 设置视频比特率
     m_video_codec_ctx->gop_size = VIDEO_GOP_SIZE; // 设置视频关键帧间隔
+    m_video_codec_ctx->has_b_frames = 0;
     m_video_codec_ctx->max_b_frames = 0;          // 设置视频最大B帧数
     m_video_codec_ctx->pix_fmt = AV_PIX_FMT_YUV420P; // 设置视频像素格式
+    m_video_codec_ctx->rc_buffer_size = VIDEO_BIT_RATE;
+
+    // 设置编码器为最快的速度和零延时的模式
+    av_opt_set(m_video_codec_ctx->priv_data, "preset", "ultrafast", 0);
+    av_opt_set(m_video_codec_ctx->priv_data, "tune", "zerolatency", 0);
 
 
     // 打开编码器
@@ -81,7 +91,7 @@ int32_t MediaCodec::init()
 
 
     m_video_frame->pts = 0; // clear manually, otherwise it is AV_NOPTS_VALUE set by av_frame_alloc by default
-        // you can test by assert(AV_NOPTS_VALUE == m_video_frame->pts);
+                            // you can test by assert(AV_NOPTS_VALUE == m_video_frame->pts);
     if (!m_video_frame) {
         std::cerr << "无法创建AVFrame对象" << std::endl;
             return -1;
@@ -111,15 +121,12 @@ int32_t MediaCodec::init()
 int MediaCodec::encodeFrame(cv::Mat mat)
 {
     assert(m_usePurpose == USE_AS_ENCODER);
-    assert(!mat.empty());
+    if(mat.empty() || mat.rows != VIDEO_HEIGHT || mat.cols != VIDEO_WIDTH){
+        return -1;
+    }
 
     // 将opencv的Mat对象转换为ffmpeg的AVFrame对象
-    uint8_t* data[AV_NUM_DATA_POINTERS] = {0};
-    data[0] = mat.data;
-    int linesize[AV_NUM_DATA_POINTERS] = {0};
-    linesize[0] = mat.cols * mat.channels();
-
-    sws_scale(m_sws_ctx, data, linesize, 0, mat.rows, m_video_frame->data, m_video_frame->linesize);
+    cvMat2AVFrame(mat, m_video_frame, m_sws_ctx);
 
     // 设置帧的pts
     qDebug() << "set pts: " << m_video_frame->pts;
@@ -134,7 +141,7 @@ int MediaCodec::encodeFrame(cv::Mat mat)
     while(rc >= 0){
         rc = avcodec_receive_packet(m_video_codec_ctx, m_video_packet);
         if(rc == 0){
-            qDebug() << " m_video_packet->size : " <<  m_video_packet->size;
+            qDebug() << " encoded m_video_packet->size in Bytes : " <<  m_video_packet->size;
             MeetChat::AVPacket av_packet;
             av_packet.set_stream_index(m_video_stream->id); // 设置音视频数据的索引为视频流的id
             av_packet.set_data(m_video_packet->data, m_video_packet->size); // 设置音视频数据的内容
@@ -180,17 +187,6 @@ int MediaCodec::decodeAVPacket(const MeetChat::AVPacket & packet)
     while(rc >= 0){
         rc = avcodec_receive_frame(m_video_codec_ctx, m_video_frame);
         if(rc == 0){
-//            // AVFrame --> cv::Mat
-//            cv::Mat mat(m_video_frame->height, m_video_frame->width, CV_8UC3);
-//            uint8_t* data[AV_NUM_DATA_POINTERS] = {0};
-//            data[0] = mat.data;
-//            int linesize[AV_NUM_DATA_POINTERS] = {0};
-//            linesize[0] = mat.cols * mat.channels();
-//            sws_scale(m_sws_ctx, m_video_frame->data, m_video_frame->linesize,
-//                      0, m_video_frame->height, data, linesize);
-//            // show
-//            cv::imshow("Video", mat);
-//            cv::waitKey(1);
             // call callback to inform data decoded
             if(m_onPacketDecodedCb) m_onPacketDecodedCb(m_video_frame);
             else qDebug() << "WARN: m_onPacketDecodedCb not registered, discard decoded data...";
@@ -202,4 +198,37 @@ int MediaCodec::decodeAVPacket(const MeetChat::AVPacket & packet)
         }
     }
     return 0;
+}
+
+void MediaCodec::cvMat2AVFrame(const cv::Mat &inMat, AVFrame *out_video_frame, SwsContext *sws_ctx){
+    uint8_t* data[AV_NUM_DATA_POINTERS] = {0};
+    int linesize[AV_NUM_DATA_POINTERS] = {0};
+    data[0] = inMat.data;
+    linesize[0] = inMat.cols * inMat.channels();
+    // make a default SwsContext, converting BGR24-->YUV420p
+    if(sws_ctx == nullptr){
+        AVPixelFormat input_pix_fmt = (AVPixelFormat)out_video_frame->format;
+        cv::Mat output_mat(VIDEO_HEIGHT, VIDEO_WIDTH, CV_8UC3);
+        sws_ctx = sws_getContext(inMat.cols, inMat.rows, AV_PIX_FMT_BGR24,
+                                             out_video_frame->width, out_video_frame->height, input_pix_fmt,
+                                             SWS_BICUBIC, nullptr, nullptr, nullptr);
+    }
+    sws_scale(sws_ctx, data, linesize, 0, inMat.rows, out_video_frame->data, out_video_frame->linesize);
+}
+
+void MediaCodec::avFrame2cvMat(const cv::Mat &out_mat, AVFrame *in_frame, SwsContext *sws_ctx)
+{
+    AVPixelFormat input_pix_fmt = (AVPixelFormat)in_frame->format;
+//    cv::Mat output_mat(VIDEO_HEIGHT, VIDEO_WIDTH, CV_8UC3);
+    if(sws_ctx == nullptr){
+        sws_ctx = sws_getContext(in_frame->width, in_frame->height, input_pix_fmt,
+                             out_mat.cols, out_mat.rows, AV_PIX_FMT_BGR24,
+                             SWS_BICUBIC, nullptr, nullptr, nullptr);
+    }
+
+    uint8_t* data[AV_NUM_DATA_POINTERS] = {0};
+    int linesize[AV_NUM_DATA_POINTERS] = {0};
+    linesize[0] = out_mat.cols * out_mat.channels();
+    data[0] = out_mat.data;
+    sws_scale(sws_ctx, in_frame->data, in_frame->linesize, 0, in_frame->height, data, linesize);
 }

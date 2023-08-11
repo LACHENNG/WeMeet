@@ -15,10 +15,13 @@ int main(int argc, char *argv[])
     file.close();
     qApp->setStyleSheet(style);
 
-    ChatWindow w;
+
     LoginDialog login;
-    if(login.exec() == QDialog::Accepted){
-        w.show();
+    if(login.exec() != QDialog::Accepted){
+        return app.exec();
     }
+
+    ChatWindow w;
+    w.show();
     return app.exec();
 }

@@ -5,6 +5,7 @@
 #ifndef CHATWINDOW_H
 #define CHATWINDOW_H
 
+#include "qdebug.h"
 #include <QFrame>
 #include <QMainWindow>
 #include <src/codec/protobuf_fwd.h>
@@ -72,6 +73,8 @@ private slots:
 private slots:
     // all event connect related stuff is done here
     void connectEventSlotsOrCallbacks();
+
+    void centralizeThisWind(int height, int width);
 
 private:
     Ui::ChatWindow*ui;

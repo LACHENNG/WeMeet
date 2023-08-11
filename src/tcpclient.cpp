@@ -36,7 +36,6 @@ void TcpClient::OnMessage(ProtoMessagePtr message)
          qDebug() << "invalid protobuf message, discarded...";
          return ;
      }
-     qDebug() << "OnMessage : " << message->GetTypeName().data();
      emit protobufMessage(message);
 }
 
