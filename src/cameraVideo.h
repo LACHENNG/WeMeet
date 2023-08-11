@@ -51,10 +51,6 @@ public:
     // Note: setOnPacketDecodedCallback to received decoded data
     int decodeAVPacket(const QSharedPointer<MeetChat::Message>& av_message);
 
-    // get the swsCtx(useful to cvt image to cv::Mat)
-    // by using sws_scale(m_sws_ctx,...)
-    const SwsContext* getSwsCtx() const;
-
     void displayCVMat(const cv::Mat& in_mat, QWidget * show_where);
 
 private slots:

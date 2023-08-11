@@ -5,7 +5,6 @@
 #ifndef CHATWINDOW_H
 #define CHATWINDOW_H
 
-#include "qdebug.h"
 #include <QFrame>
 #include <QMainWindow>
 #include <src/codec/protobuf_fwd.h>

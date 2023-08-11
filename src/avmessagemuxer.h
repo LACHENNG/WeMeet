@@ -52,12 +52,6 @@ public:
 
     void setOnPacketDecodedCallback(const OnAVPacketDecodedCallback& cb) { m_onAvPacketDecoded = cb; }
 
-    // Only use it when AVFrame is a video not audio
-    // return a sws_ctx which you can use it to transfer AVFrame-->vc::Mat
-    // by sws_scale(m_sws_ctx,...)
-    const SwsContext* getSwsCtx() const;
-
-
 private:
     using sender_t = std::string;
     using sender_avPacket_decodedCb_t =  std::function<void (const AVFrame*)>;

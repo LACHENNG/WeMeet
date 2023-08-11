@@ -99,11 +99,6 @@ int CameraVideo::decodeAVPacket(const QSharedPointer<MeetChat::Message>& av_mess
     return m_mediaDecoder->decodeAVPacket(av_message);
 }
 
-const SwsContext *CameraVideo::getSwsCtx() const
-{
-    return m_mediaDecoder->getSwsCtx();
-}
-
 void CameraVideo::displayCVMat(const cv::Mat& mat, QWidget * showWhere)
 {
     QImage image= QImage((const unsigned char*)(mat.data), mat.cols, mat.rows,

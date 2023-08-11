@@ -260,7 +260,6 @@ void ChatWindow::on_videoButton_clicked()
     static Status status = closed;
 
     if(status == opened){ // current state is opend, try to close
-
         m_cameraVideo->stopCap();
         status = closed;
         ui->videoButton->setText(QString::fromLocal8Bit("开启视频"));
@@ -271,6 +270,8 @@ void ChatWindow::on_videoButton_clicked()
     if(f){
         ui->videoButton->setText(QString::fromLocal8Bit("关闭视频"));
         status = opened;
+    }else{
+        QMessageBox::warning(this, Chinese("错误！"),Chinese("摄像头被占用，无法打开"), QMessageBox::Yes);
     }
 }
 

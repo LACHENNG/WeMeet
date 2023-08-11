@@ -70,7 +70,3 @@ int AVDecoderMuxer::decodeAVPacket(const QSharedPointer<MeetChat::Message> &av_m
     return m_mediaDecoder->decodeAVPacket(av_packet);
 }
 
-const SwsContext *AVDecoderMuxer::getSwsCtx() const
-{
-    return m_mediaDecoder->getSwsCtx();
-}

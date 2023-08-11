@@ -64,10 +64,6 @@ public:
     // Note: setOnPacketDecodedCallback to received decoded data
     int decodeAVPacket(const MeetChat::AVPacket& av_packet);
 
-    // return a sws_ctx which you can use it to transfer AVFrame-->vc::Mat
-    // by sws_scale(m_sws_ctx,...)
-    SwsContext* getSwsCtx() { return m_sws_ctx; };
-
     // convert cv::Mat to AvFrame using given SwsContext
     // if sws_ctx is left null, cv::Mat(assume BGR24 format) is convert to AVFrame (YUV420 format)
     static void cvMat2AVFrame(const cv::Mat& inMat, AVFrame* out_video_frame, SwsContext* sws_ctx = nullptr);
