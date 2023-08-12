@@ -58,7 +58,14 @@ include_directories(${ffmpeg_INCLUDE_DIRS})
 link_directories(${ffmpeg_LINK_DIRS})
 ######################! ffmpeg related ! ############################
 
+####################### PortAudio  #############################
+set(PortAudio_INCLUDE_DIRS "D:/Software/install/portaudio/include")
+set(PortAudio_LINK_DIRS "D:/Software/install/portaudio/lib/")
+set(PortAudio_LIBRARIES portaudio_x64 )
 
+include_directories(${PortAudio_INCLUDE_DIRS})
+link_directories(${PortAudio_LINK_DIRS})
+#######################! PortAudio !#############################
 
 
 ######################  Opus related ############################
@@ -68,10 +75,31 @@ find_package(Opus  REQUIRED
 include_directories(${OPUS_INCLUDE_DIRS})
 
 ######################! Opus related ! ############################ D:\Software\install\opus-1.4\cmake
+set(SRC_BASE
+    src/tcpclient.cpp
+    src/tcpclient.h
+    src/config.cpp
+    src/config.h
+    src/cameravideo.h
+    src/cameravideo.cpp
+    src/mediacodec.h
+    src/mediacodec.cpp
+    src/avmessagemuxer.h
+    src/avmessagemuxer.cpp
+    src/portaudiox.h
+    src/portaudiox.cpp
 
+    src/codec/packet.cpp
+    src/codec/packet.h
+    src/codec/protobufCodec.cpp
+    src/codec/protobufCodec.h
+    src/codec/protobuf_fwd.h
 
-set(PROJECT_SOURCES
-    main.cpp
+    src/protoc/message.pb.h
+    src/protoc/message.pb.cc
+)
+
+set(SRC_CHAT
     assets/img.qrc
 
     ui/logindialog.cpp
@@ -93,29 +121,13 @@ set(PROJECT_SOURCES
     ui/chatmessage/filemessage.cpp
     ui/chatmessage/messagecommon.h
 
-    src/tcpclient.cpp
-    src/tcpclient.h
-    src/config.cpp
-    src/config.h
-    src/cameravideo.h
-    src/cameravideo.cpp
-    src/mediacodec.h
-    src/mediacodec.cpp
-    src/avmessagemuxer.h
-    src/avmessagemuxer.cpp
-
-    src/codec/packet.cpp
-    src/codec/packet.h
-    src/codec/protobufCodec.cpp
-    src/codec/protobufCodec.h
-    src/codec/protobuf_fwd.h
-
-    src/protoc/message.pb.h
-    src/protoc/message.pb.cc
 )
 
 add_executable(ChatClient
-    ${PROJECT_SOURCES}
+    main.cpp
+    # src/test/test_PortAudioX.cpp
+    ${SRC_BASE}
+    ${SRC_CHAT}
 )
 
 target_link_libraries(ChatClient PRIVATE
@@ -130,6 +142,7 @@ target_link_libraries(ChatClient PRIVATE
     ${x264_LIBRARIES}
     ${OPUS_LIBRARIES}
     ${ffmpeg_LIBRARIES}
+    ${PortAudio_LIBRARIES}
 )
 
 set_target_properties(ChatClient PROPERTIES
@@ -137,5 +150,5 @@ set_target_properties(ChatClient PROPERTIES
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
     MACOSX_BUNDLE TRUE
-    WIN32_EXECUTABLE TRUE
+    WIN32_EXECUTABLE FALSE # set TRUE to disable console
 )
