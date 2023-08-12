@@ -2,7 +2,6 @@
 #include "ui/logindialog.h"
 #include <QApplication>
 #include <QFile>
-#include <opus.h>
 using namespace std;
 
 int main(int argc, char *argv[])
@@ -14,7 +13,6 @@ int main(int argc, char *argv[])
     QString style = file.readAll();
     file.close();
     qApp->setStyleSheet(style);
-
 
     LoginDialog login;
     if(login.exec() != QDialog::Accepted){

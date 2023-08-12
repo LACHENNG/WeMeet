@@ -10,3 +10,11 @@ server_port:2345
 # 默认打开的摄像头（ 0 表示第一个，或者默认摄像头 ）
 cameraIdx:0
 
+###################
+# debug only
+###################
+# 1 to open, 0 to close
+displayPacketSend : 1
+# show current video frame number or pts (presentation timestamp)
+showCurrentVideoFramePts : 1
+showEncoded_video_avpacket_size : 1

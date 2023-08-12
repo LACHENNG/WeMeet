@@ -20,7 +20,7 @@ namespace cv { class VideoCapture; class Mat; };
 #define VIDEO_HEIGHT 720
 #define VIDEO_FPS 30
 #define VIDEO_BIT_RATE 4000000    // bit rate of video
-#define VIDEO_GOP_SIZE 10        // video key frame(I frame) interval, gap(#frames) between two I frames
+#define VIDEO_GOP_SIZE 30        // video key frame(I frame) interval, gap(#frames) between two I frames
 #define AUDIO_SAMPLE_RATE 44100
 #define AUDIO_CHANNELS 2
 #define AUDIO_BIT_RATE 64000

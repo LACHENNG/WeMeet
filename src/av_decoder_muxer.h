@@ -1,4 +1,7 @@
-﻿#ifndef AVDECODERMUXER_H
+﻿// Author : lang @ nwpu transplus@foxmail.com
+// All rights reserved
+
+#ifndef AVDECODERMUXER_H
 #define AVDECODERMUXER_H
 
 #include <string>

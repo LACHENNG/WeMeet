@@ -60,6 +60,7 @@ public:
     // get packet header len in host byte order, has to be Parsed be this call
     int32_t headerLen() const { assert(m_state == Parsed); return ntohl(*m_headerBe32); }
     // get packet type name len in host byte order(not include the ending '\0'), has to be Parsed be this call
+    // not that the actual tyename stored in packet always includes the ending '\0'
     int32_t typeNameLen() const{ assert(m_state == Parsed); return ntohl(*m_msglenBe32) - 1; } // not include the ending '\0'
                                                                                                //
     int32_t payloadLen() const{ assert(m_state == Parsed);return headerLen() - kMsgNameLen - typeNameLen() - 1 - kCheckSumLen;}
@@ -76,6 +77,7 @@ public:
     // get packet checksum in host byte order
     int32_t checkSum() const { assert(m_state == Parsed);return ntohl(*m_checkSumBe32); }
 
+    static void printPacket(const Packet& packet);
 private:
     // FIXME: imple adler32
     static int32_t calcCheckSum(const StringPiece& messageTypeName, const ProtoMessage& protoMessage) { return 0; }

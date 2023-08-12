@@ -19,7 +19,7 @@ QT_END_NAMESPACE
 
 class TcpClient;
 class QListWidgetItem;
-class CameraVideo;
+class AVControl;
 class MediaCodec;
 namespace cv { class VideoCapture; };
 
@@ -77,7 +77,7 @@ private slots:
 
 private:
     Ui::ChatWindow*ui;
-    CameraVideo* m_cameraVideo;             // vidio and audio ecodec and display
+    AVControl* m_cameraVideo;             // vidio and audio ecodec and display
     QScopedPointer<TcpClient> m_chatClient; // handle data sending(encoding) and receiving(decoding)
 };
 

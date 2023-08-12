@@ -1,4 +1,4 @@
-﻿#include "cameravideo.h"
+﻿#include "av_control.h"
 #include <QLabel>
 #include <QTimer>
 #include <opencv2/opencv.hpp>
@@ -8,7 +8,7 @@
 #include "src/mediacodec.h"
 #include "src/config.h"
 
-CameraVideo::CameraVideo(QWidget* showWhere, int fps,  QWidget *parent)
+AVControl::AVControl(QWidget* showWhere, int fps,  QWidget *parent)
     : m_showWhere(showWhere),
     m_fps(fps),
     m_pixmapLable(new QLabel(showWhere)),
@@ -21,21 +21,21 @@ CameraVideo::CameraVideo(QWidget* showWhere, int fps,  QWidget *parent)
     connectSlots();
 }
 
-CameraVideo::~CameraVideo()
+AVControl::~AVControl()
 {
     delete m_timerCameraFrame;
 }
 
-bool CameraVideo::startCap()
+bool AVControl::startCap()
 {
-    m_cap->open(std::stoi(Config::getInstance().get("cameraIdx")));
-    cv::Mat frame;
-    bool open_success = m_cap->read(frame);
-    if(open_success) m_timerCameraFrame->start();
-    return open_success;
+    if(openCamera()){
+        m_timerCameraFrame->start();
+        return true;
+    }
+    return false;
 }
 
-void CameraVideo::processOneAVFrame()
+void AVControl::processOneAVFrame()
 {
     cv::Mat frame;
     *m_cap >> frame;
@@ -52,13 +52,13 @@ void CameraVideo::processOneAVFrame()
     }
 }
 
-void CameraVideo::connectSlots()
+void AVControl::connectSlots()
 {
     connect(this->m_timerCameraFrame, SIGNAL(timeout()),
             this, SLOT(processOneAVFrame()));
 }
 
-void CameraVideo::stopCap()
+void AVControl::stopCap()
 {
     m_timerCameraFrame->stop();
     m_cap->release();
@@ -66,7 +66,7 @@ void CameraVideo::stopCap()
     m_pixmapLable->show();
 }
 
-void CameraVideo::setFps(int Fps)
+void AVControl::setFps(int Fps)
 {
     m_fps = std::max(1, Fps);
     bool active = m_timerCameraFrame->isActive();
@@ -79,27 +79,27 @@ void CameraVideo::setFps(int Fps)
 }
 
 
-void CameraVideo::setOnFrameEncodedCallback(const OnFrameEncodedCallback &cb)
+void AVControl::setOnFrameEncodedCallback(const OnFrameEncodedCallback &cb)
 {
     m_mediaCodec->setOnFrameEncodedCallback(cb);
 }
 
-void CameraVideo::setOnPacketDecodedCallback(const OnAVPacketDecodedCallback &cb)
+void AVControl::setOnPacketDecodedCallback(const OnAVPacketDecodedCallback &cb)
 {
    m_mediaDecoder->setOnPacketDecodedCallback(cb);
 }
 
-int CameraVideo::encodeFrame(const cv::Mat &mat)
+int AVControl::encodeFrame(const cv::Mat &mat)
 {
     return m_mediaCodec->encodeFrame(mat);
 }
 
-int CameraVideo::decodeAVPacket(const QSharedPointer<MeetChat::Message>& av_message)
+int AVControl::decodeAVPacket(const QSharedPointer<MeetChat::Message>& av_message)
 {
     return m_mediaDecoder->decodeAVPacket(av_message);
 }
 
-void CameraVideo::displayCVMat(const cv::Mat& mat, QWidget * showWhere)
+void AVControl::displayCVMat(const cv::Mat& mat, QWidget * showWhere)
 {
     QImage image= QImage((const unsigned char*)(mat.data), mat.cols, mat.rows,
                           QImage::Format_RGB888).rgbSwapped();
@@ -110,5 +110,12 @@ void CameraVideo::displayCVMat(const cv::Mat& mat, QWidget * showWhere)
     m_pixmapLable->resize(showWhere->size());
     m_pixmapLable->move(0, 0);
     m_pixmapLable->show();
+}
+
+bool AVControl::openCamera()
+{
+    m_cap->open(std::stoi(Config::getInstance().get("cameraIdx")));
+    cv::Mat frame;
+    return m_cap->read(frame); // read a frame to check if the camera is actually opened
 }
 

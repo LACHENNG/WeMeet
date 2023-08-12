@@ -80,12 +80,12 @@ set(SRC_BASE
     src/tcpclient.h
     src/config.cpp
     src/config.h
-    src/cameravideo.h
-    src/cameravideo.cpp
+    src/av_control.h
+    src/av_control.cpp
     src/mediacodec.h
     src/mediacodec.cpp
-    src/avmessagemuxer.h
-    src/avmessagemuxer.cpp
+    src/av_decoder_muxer.h
+    src/av_decoder_muxer.cpp
     src/portaudiox.h
     src/portaudiox.cpp
 

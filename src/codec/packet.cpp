@@ -7,6 +7,8 @@
 #include <QDebug>
 #include <winsock.h>
 
+#include <src/config.h>
+
 
 bool Packet::canParseFromArray(const void* packet_header, size_t readableBytes)
 {
@@ -83,10 +85,31 @@ bool Packet::packProtoMessageToCachedSizeArray(void * start, size_t buf_size, co
     dest += sizeof(checkSumBe32);
 
     assert(dest - (char*)start == packetBytesAll);
+    if(Config::getInstance().get("displayPacketSend") == "1"){
+        qDebug() << "++++++++++++++++Packet ++++++++++++++++++++++++++\n"
+                 << "(4B) Header len : " << packetBytesAll - kHeaderLen << "\n"
+                 << "(4B) Msg name len: " << typeName.size() + 1 << "\n"
+                 << "Msg name: " << typeName.c_str() << "\n"
+                 << "Protodata with size: " << message.ByteSizeLong() << "\n"
+                 << "(4B)Check sum : " << calcCheckSum(typeName, message) << "\n"
+                 << "+++++++++++++++++++++++++++++++++++++++++++++++++";
+    }
+
     return (dest - (char*)start == packetBytesAll);
 }
 
 size_t Packet::bytesAllToPack(const google::protobuf::Message &message)
 {
     return kHeaderLen + kMsgNameLen + kCheckSumLen + message.GetTypeName().size() + 1 + message.ByteSizeLong();
+}
+
+void Packet::printPacket(const Packet &packet)
+{
+    qDebug() << "+++++++++++++Packet show in host order++++++++++++\n"
+             << "(4B) Header len : " << packet.headerLen() << "\n"
+             << "(4B) Msg name len: " << packet.typeNameLen() + 1 << "\n"
+             << "Msg name: " << packet.messageTypeName() << "\n"
+             << "Protodata with size: " << packet.headerLen() - packet.typeNameLen() - 1 - kCheckSumLen << "\n"
+             << "(4B)Check sum : " << packet.checkSum() << "\n"
+             << "+++++++++++++++++++++++++++++++++++++++++++++++++";
 }

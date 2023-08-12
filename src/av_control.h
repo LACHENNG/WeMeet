@@ -1,8 +1,8 @@
 ﻿// Author : lang @ nwpu transplus@foxmail.com
 // All rights reserved
 
-#ifndef CAMERA_VIDIO_H
-#define CAMERA_VIDIO_H
+#ifndef AUDIO_VIDIO_CTRL_H
+#define AUDIO_VIDIO_CTRL_H
 
 extern "C"{
 #include <libavcodec/avcodec.h>
@@ -12,7 +12,7 @@ extern "C"{
 }
 
 #include <src/protoc/message.pb.h>
-#include "avmessagemuxer.h"
+#include "av_decoder_muxer.h"
 
 #include <QObject>
 
@@ -22,15 +22,15 @@ namespace cv { class VideoCapture; class Mat; }
 class QLabel;
 class MediaCodec;
 
-
+// AVControl: audio video control
 // Used to open and show camera vedio to the user specified QWidget
 // and encode and decode audio / video data (the encoded or decoded data is passed to user by callback mechanism)
 // It use QTimer to control FPS
-class CameraVideo : public QObject{
+class AVControl : public QObject{
     Q_OBJECT
 public :
-    CameraVideo(QWidget* showWhere = nullptr, int fps = 30, QWidget *parent = nullptr);
-    ~CameraVideo();
+    AVControl(QWidget* showWhere = nullptr, int fps = 30, QWidget *parent = nullptr);
+    ~AVControl();
 
 public:
     using OnFrameEncodedCallback = std::function<void (const MeetChat::AVPacket&)>;
@@ -53,7 +53,11 @@ public:
 
     void displayCVMat(const cv::Mat& in_mat, QWidget * show_where);
 
+
 private slots:
+    // try to open camera, return false on failure
+    bool openCamera();
+
     // process single frame capture from camera
     // timeout function for QTimer
     void processOneAVFrame();
@@ -71,4 +75,4 @@ private:
     std::unique_ptr<AVDecoderMuxer> m_mediaDecoder;
 };
 
-#endif
+#endif // AUDIO_VIDIO_CTRL_H

@@ -1,4 +1,5 @@
-﻿#include "mediacodec.h"
+﻿#include "config.h"
+#include "mediacodec.h"
 #include "qimage.h"
 #include "ui/chatwindow.h"
 #include <QDebug>
@@ -129,7 +130,9 @@ int MediaCodec::encodeFrame(cv::Mat mat)
     cvMat2AVFrame(mat, m_video_frame, m_sws_ctx);
 
     // 设置帧的pts
-    qDebug() << "set pts: " << m_video_frame->pts;
+    if(Config::getInstance().get("showCurrentVideoFramePts") == "1"){
+        qDebug() << "set pts: " << m_video_frame->pts;
+    }
     m_video_frame->pts += av_rescale_q(1, m_video_codec_ctx->time_base, m_video_stream->time_base);
 
     // 编码一帧图像
@@ -141,7 +144,9 @@ int MediaCodec::encodeFrame(cv::Mat mat)
     while(rc >= 0){
         rc = avcodec_receive_packet(m_video_codec_ctx, m_video_packet);
         if(rc == 0){
-            qDebug() << " encoded m_video_packet->size in Bytes : " <<  m_video_packet->size;
+            if(Config::getInstance().get("showEncoded_video_avpacket_size") == "1"){
+                qDebug() << " encoded m_video_packet->size in Bytes : " <<  m_video_packet->size;
+            }
             MeetChat::AVPacket av_packet;
             av_packet.set_stream_index(m_video_stream->id); // 设置音视频数据的索引为视频流的id
             av_packet.set_data(m_video_packet->data, m_video_packet->size); // 设置音视频数据的内容

@@ -1,7 +1,7 @@
 ﻿#include "chatwindow.h"
 #include "ui_chatwindow.h"
 #include "src/tcpclient.h"
-#include <src/cameraVideo.h>
+#include <src/av_control.h>
 #include "src/config.h"
 #include <QDateTime>
 #include <src/protoc/message.pb.h>
@@ -32,14 +32,13 @@ ChatWindow::ChatWindow(QWidget *parent)
     ui->listWidget->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
 
     // construct CameraVideo after ui->setupUi
-    m_cameraVideo = new CameraVideo(ui->displayWidget, 30, parent),
+    m_cameraVideo = new AVControl(ui->displayWidget, 30, parent),
     m_chatClient->start();
 
     this->setWindowTitle(Chinese("MeetChat 欢迎 @ ") + QString::fromStdString(Config::getInstance().get("userId")));
     connectEventSlotsOrCallbacks();
 
     centralizeThisWind(390, 620);
-
 }
 
 ChatWindow::~ChatWindow()
