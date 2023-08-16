@@ -469,7 +469,7 @@ int MediaCodec::checkSampleFmt(const AVCodec *codec, AVSampleFormat sample_fmt)
 {
     const enum AVSampleFormat *p = codec->sample_fmts;
 
-    while (*p != AV_SAMPLE_FMT_NONE && *p != AV_SAMPLE_FMT_NB) {
+    while (*p != AV_SAMPLE_FMT_NONE) {
         if (*p == sample_fmt)
             return 1;
         p++;
