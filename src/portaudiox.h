@@ -17,6 +17,7 @@ do{                                                  \
     }                                                \
 }while(0)
 
+#define PA_SAMPEL_FMT paInt16
 
 // Open default device for reading audio or writing (paly sound) audio data (PCM data)
 // It provides callback mechanism when audio deviced sampled data is ready or
@@ -41,14 +42,14 @@ public:
         MODE_INPUT_OUTPUT
     };
 
-    const int kChannel = 2;
-    const int kSample_rate = 44100; // 8kHz(Tel)、16kHz、44.1kHz(CD)、48kHz(DVD)
-    const int kFrame_per_second = 0; // set to 0 to let the underlying library to choose a optimal one
+    static const int kChannel = 2;
+    static const int kSample_rate = 48000; // 8kHz(Tel)、16kHz、44.1kHz(CD)、48kHz(DVD)
+    static const int kFramesPerBuffer = 960; // 20ms frame , which Opus is support
 
     using onAudioReadableCallback = std::function<int(const void* input, unsigned long nSampleNum,
                                                        size_t nBytesPerSample, uint8_t n_channel,
                                                        const PaStreamCallbackTimeInfo* timeInfo)>;
-    using onAudioWritableCallback = std::function<int(void* output, const unsigned long frameCountExpected,
+    using onAudioWritableCallback = std::function<int(void* output, const unsigned long frameCountLimit,
                                                        size_t nBytesPerFrame, uint8_t n_channel,
                                                        const PaStreamCallbackTimeInfo* timeInfo)>;
     using onAudioRWCallback = std::function<int(const void* input, void *output, unsigned long nSampleNum,
@@ -67,6 +68,16 @@ public:
     int start();
     int stopUntillDone();
     int stopRightNow();
+
+    // usefull to get nSampleNum in each callback when kFramesPerBuffer is set to paFramesPerBufferUnspecified
+    // return 0 if PortAudioX is not initalized using Input mode
+    unsigned long getInputFramesPerBuffer();
+
+    // usefull to get nSampleNum in each callback when kFramesPerBuffer is set to paFramesPerBufferUnspecified
+    // return 0 if PortAudioX is not initalized using Output mode
+    unsigned long getOutputFramesPerBuffer();
+
+    static int getBytesPersample(PaSampleFormat sample_fmt);
 
 private:
     bool init();
