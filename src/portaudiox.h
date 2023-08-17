@@ -8,12 +8,12 @@
 #include <functional>
 #include <exception>
 #include <string>
-
+#include <iostream>
 #define checkPaErrWithPrompt(c_str_prompt, PaError_err)  \
 do{                                                  \
     if (PaError_err != paNoError)                    \
     {                                                \
-        throw std::runtime_error(c_str_prompt + std::string(Pa_GetErrorText(PaError_err)));  \
+        std::cout << c_str_prompt + std::string(Pa_GetErrorText(PaError_err)) << std::endl; \
     }                                                \
 }while(0)
 
@@ -33,7 +33,7 @@ do{                                                  \
 // Any state you want to bring into the function has to either be global, or passed as parameters.
 // That is why most C callback APIs have a "context" parameter, typically a void pointer, that you can pass in,
 // and just serves to allow you to pass in the data you need.)
-class PortAudioX // non-copyable
+class PortAudioX// non-copyable
 {
 public:
     enum MODE{

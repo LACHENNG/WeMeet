@@ -44,6 +44,9 @@ void PortAudioX::setOnAudioRWCallback(const onAudioRWCallback &cb)
 
 int PortAudioX::start()
 {
+    if( !initOpenStream()){
+        return false;
+    }
     auto err = Pa_StartStream(m_audio_io_stream);
     checkPaErrWithPrompt("Pa_StartStream", err);
     return err == paNoError;
@@ -106,7 +109,7 @@ bool PortAudioX::init()
     PaError err = Pa_Initialize();
     checkPaErrWithPrompt("Pa_Initialize", err);
     initParameter();
-    return initOpenStream();
+    return true;
 }
 
 void PortAudioX::initParameter()
