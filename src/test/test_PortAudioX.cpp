@@ -10,7 +10,7 @@
 #include <thread>
 
 // 定义pcm文件的路径
-const char* PCM_FILE = "D:/Qt/music.pcm";
+const char* PCM_FILE = "D:/Qt/music_s16.pcm";
 
 // 测试播放音频
 int main_testOutput()
@@ -25,8 +25,8 @@ int main_testOutput()
     // 判断是否打开成功
     if (!file.is_open()) {
         // 抛出一个异常，提示无法打开pcm文件
-        printf("Can`t open: [%s], use command `ffmpeg -i your.mp3 -f f32le -acodec pcm_f32le "
-               "-ar 44100 -ac 2 music.pcm` to generate one and copy to %s\n", PCM_FILE, PCM_FILE);
+        printf("Can`t open: [%s], use command `ffmpeg -i input.mp3 -f s16le -acodec pcm_s16le -ar 48000 -ac 2 output.pcm` "
+               "to generate one and copy to %s\n", PCM_FILE, PCM_FILE);
         throw std::runtime_error("无法打开pcm文件");
     }
 
