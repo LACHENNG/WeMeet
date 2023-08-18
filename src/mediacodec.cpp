@@ -136,9 +136,11 @@ int32_t MediaCodec::initAudio()
         m_audio_codec = avcodec_find_encoder_by_name("libopus");
     else{
         m_audio_codec = avcodec_find_decoder_by_name("libopus");
-        // NOTE: the WTF bug stack me for a quit long time
-        // do not use avcodec_find_encoder_by_name and avcodec_find_decoder with may dismatch
-//         m_audio_codec = avcodec_find_decoder(AV_CODEC_ID_OPUS);
+        // NOTE: the WTF bug stuck me for quit a long time
+        // Do not use avcodec_find_encoder_by_name and avcodec_find_decoder with may dismatch
+        // m_audio_codec = avcodec_find_decoder(AV_CODEC_ID_OPUS);
+        // You should better check codec_ctx->format before and after avcodec_open2, which may change
+        // the parameter you specified if the codec does not support it
     }
 
     if (!m_audio_codec) {
@@ -364,10 +366,12 @@ int MediaCodec::decodeAVPacket(const MeetChat::AVPacket & packet)
 
     switch (getAVPacketMediaType(m_av_packet)) {
     case AVMEDIA_TYPE_VIDEO:
+        qDebug() << "AVMEDIA_TYPE_VIDEO";
         decoder_ctx = m_video_codec_ctx;
         av_frame = m_video_frame;
         break;
     case AVMEDIA_TYPE_AUDIO:
+        qDebug() << "AVMEDIA_TYPE_AUDIO";
         decoder_ctx = m_audio_codec_ctx;
         av_frame = m_audio_frame;
         break;

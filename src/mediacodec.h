@@ -11,7 +11,7 @@ extern "C"{
 #include <libavutil/imgutils.h>
 #include <libavutil/opt.h>
 };
-#include <string.h>
+
 #include <src/protoc/message.pb.h>
 
 namespace cv { class VideoCapture; class Mat; };
@@ -39,9 +39,10 @@ const char *avErr2Str(const char* prompt, int errnum);
 // It use H.264 to encode video frames
 //    use Opus[ /ˈoʊpəs/，欧普斯 ] to encode sounds
 //
-// Important: do not use a single MediaCodec as a encoder and decoder at the same time
+// Important: Do not use a single MediaCodec as a encoder and decoder at the same time
 //            if you need encode and decode, make two seperate MediaCodec instance to do that
-//            with different construct paramters
+//            with different construct paramters.
+//            But, you can encode audio and video or decoded audio and video within a single MediaCodec
 class MediaCodec
 {
 public:
@@ -92,6 +93,12 @@ public:
     static int checkSampleFmt(const AVCodec *codec, enum AVSampleFormat sample_fmt);
 
     AVMediaType getAVPacketMediaType(const AVPacket *pkt);
+
+    // get***(const AVFrame* audio_frame): convenient function to get nb_sample, nb_channle, bytes_per_sample of audio AVFrame
+    static int getNumberSample(const AVFrame* audio_frame) { return audio_frame->nb_samples; }
+    static int getNumberChannel(const AVFrame* audio_frame) { return audio_frame->ch_layout.nb_channels; }
+    static int getBytesPerSample(const AVFrame* audio_frame) { return av_get_bytes_per_sample((AVSampleFormat)audio_frame->format);}
+    static int getTotalBytesIn(const AVFrame* audio_frame){ return getNumberSample(audio_frame)*getNumberChannel(audio_frame)*getBytesPerSample(audio_frame); }
 
 private:
     // return 0 if sucess, otherwise a negative error code is returnd;
