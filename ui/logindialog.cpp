@@ -1,5 +1,4 @@
 ﻿#include "logindialog.h"
-#include "qdebug.h"
 #include "ui_logindialog.h"
 
 #include <QString>

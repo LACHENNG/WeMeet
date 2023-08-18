@@ -1,4 +1,5 @@
 ﻿#include "chatwindow.h"
+#include "src/av_decoder_muxer.h"
 #include "ui_chatwindow.h"
 #include "src/tcpclient.h"
 #include <src/av_control.h>
@@ -39,6 +40,8 @@ ChatWindow::ChatWindow(QWidget *parent)
     connectEventSlotsOrCallbacks();
 
     centralizeThisWind(390, 620);
+
+    qRegisterMetaType<MeetChat::AVPacket>("MeetChat::AVPacket");
 }
 
 ChatWindow::~ChatWindow()
@@ -192,7 +195,6 @@ void ChatWindow::onFileMessage(const QSharedPointer<MeetChat::Message>& message)
 void ChatWindow::onAVMessage(const QSharedPointer<MeetChat::Message>& message)
 {
     assert(message->type() == MeetChat::AV);
-
     this->m_cameraVideo->decodeAVPacket(message);
 }
 
@@ -276,14 +278,27 @@ void ChatWindow::on_videoButton_clicked()
 
 void ChatWindow::on_soundButton_clicked()
 {
-    static qint64 i = -1; i++;
-    // open camera
-    if(i % 2 == 0){
-        ui->soundButton->setText(QString::fromLocal8Bit("关闭声音"));
+    enum Status{opened, closed};
+    static Status status = closed;
 
-    }else{ // close camera
+    if(status == opened){ // current state is opend, try to close
+        m_cameraVideo->stopCapAudio();
+        status = closed;
         ui->soundButton->setText(QString::fromLocal8Bit("开启声音"));
+        return;
     }
+    // current state is closed, try to open
+    bool f = m_cameraVideo->startCapAudio();
+    if(f){
+        ui->soundButton->setText(QString::fromLocal8Bit("关闭声音"));
+        status = opened;
+    }else{
+        QMessageBox::warning(this, Chinese("错误！"),Chinese("无法打开麦克风"), QMessageBox::Yes);
+    }
+}
+
+void ChatWindow::slot_send_avframe(MeetChat::AVPacket packet) {
+    this->sendAVMessgae(packet);
 }
 
 void ChatWindow::displayTimeMessage(qint64 timeSecsSinceEpoch)
@@ -327,27 +342,48 @@ void ChatWindow::connectEventSlotsOrCallbacks()
 {
     connect(m_chatClient.get(), SIGNAL(protobufMessage(ProtoMessagePtr)),
             this, SLOT(onProtoMessageReceived(ProtoMessagePtr)));
+
+    connect(this, SIGNAL(signal_avframe_encoded(MeetChat::AVPacket)),
+            this, SLOT(slot_send_avframe(MeetChat::AVPacket)));
+
     this->m_cameraVideo->setOnFrameEncodedCallback([this](const MeetChat::AVPacket& data){
-        // send to peer
-        this->sendAVMessgae(data);
-    });
-    this->m_cameraVideo->setOnPacketDecodedCallback([this](const MessageContext& ctx, const AVFrame* m_video_frame){
-        cv::Mat output_mat(m_video_frame->height, m_video_frame->width, CV_8UC3);
-        MediaCodec::avFrame2cvMat(output_mat, const_cast<AVFrame*>(m_video_frame));
-
-        static QLabel img_lable;
-        QImage image= QImage((const unsigned char*)(output_mat.data), output_mat.cols, output_mat.rows,
-                              QImage::Format_RGB888).rgbSwapped();
-
-        img_lable.setPixmap(QPixmap::fromImage(image)
-                                     .scaledToWidth(640, Qt::SmoothTransformation));
-
-        img_lable.resize(640,480);
-        img_lable.setWindowTitle(  Chinese("我【") + QString::fromStdString(Config::getInstance().get("userName"))+ Chinese("】")
-                                 + Chinese("正在观看来自 【") + QString::fromStdString(ctx.getSender_id()) + Chinese("】的视频分享"));
-        img_lable.show();
+        // this callback may invoked in other thread (eg. PortAudio)
+        //  send data(which use Qt socket) in other thread is not allowed
+        // this->sendAVMessgae(data);
+       emit signal_avframe_encoded(data);
     });
 
+
+    // set on AVPacket decoded callback, AVPacket may contains audio or video data
+    // which requires additional check to dispatch audio and video
+    this->m_cameraVideo->setOnPacketDecodedCallback([this](const MessageContext& ctx, const AVFrame* m_av_frame){
+        // according to the facts that video frame has nono zero width and height value
+
+        if( m_av_frame->width != 0 && m_av_frame->height != 0 ){
+            cv::Mat output_mat(m_av_frame->height, m_av_frame->width, CV_8UC3);
+            MediaCodec::avFrame2cvMat(output_mat, const_cast<AVFrame*>(m_av_frame));
+
+            static QLabel img_lable;
+            QImage image= QImage((const unsigned char*)(output_mat.data), output_mat.cols, output_mat.rows,
+                                  QImage::Format_RGB888).rgbSwapped();
+
+            img_lable.setPixmap(QPixmap::fromImage(image)
+                                         .scaledToWidth(640, Qt::SmoothTransformation));
+
+            img_lable.resize(640,480);
+            img_lable.setWindowTitle(  Chinese("我【") + QString::fromStdString(Config::getInstance().get("userName"))+ Chinese("】")
+                                     + Chinese("正在观看来自 【") + QString::fromStdString(ctx.getSender_id()) + Chinese("】的视频分享"));
+            img_lable.show();
+
+            return ;
+        }
+
+        // AVFrame is audio otherwise
+        void* start = m_av_frame->data[0];
+        int nBytes = MediaCodec::getTotalBytesIn(m_av_frame);
+               qDebug() << "About to queueToPlay" << nBytes <<  "nBytes";
+        m_cameraVideo->queueToPlay(start, nBytes);
+    });
 }
 
 void ChatWindow::centralizeThisWind(int height, int width)

@@ -63,11 +63,14 @@ private slots:
     // on undecoded data
     void onAVMessage(const QSharedPointer<MeetChat::Message>& message);
 
-
     void on_sendButton_clicked();
     void on_fileButton_clicked();
     void on_videoButton_clicked();
     void on_soundButton_clicked();
+
+signals:
+    // FIXME: low efficiency too many memory copy
+    void signal_avframe_encoded(MeetChat::AVPacket packet);
 
 private slots:
     // all event connect related stuff is done here
@@ -75,6 +78,7 @@ private slots:
 
     void centralizeThisWind(int height, int width);
 
+    void slot_send_avframe(MeetChat::AVPacket packet);
 private:
     Ui::ChatWindow*ui;
     AVControl* m_cameraVideo;             // vidio and audio ecodec and display

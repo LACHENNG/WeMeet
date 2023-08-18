@@ -69,10 +69,10 @@ link_directories(${PortAudio_LINK_DIRS})
 
 
 ######################  Opus related ############################
-find_package(Opus  REQUIRED
-             PATHS "D:/Software/install/opus/lib/cmake/Opus"  # do not use chinese characters in path
-             NO_DEFAULT_PATH )
-include_directories(${OPUS_INCLUDE_DIRS})
+#find_package(Opus  REQUIRED
+#             PATHS "D:/Software/install/opus/lib/cmake/Opus"  # do not use chinese characters in path
+#             NO_DEFAULT_PATH )
+#include_directories(${OPUS_INCLUDE_DIRS})
 
 ######################! Opus related ! ############################ D:\Software\install\opus-1.4\cmake
 set(SRC_BASE
@@ -88,6 +88,8 @@ set(SRC_BASE
     src/av_decoder_muxer.cpp
     src/portaudiox.h
     src/portaudiox.cpp
+    src/audioplayer.h
+    src/audioplayer.cpp
 
     src/codec/packet.cpp
     src/codec/packet.h
@@ -125,7 +127,9 @@ set(SRC_CHAT
 
 add_executable(ChatClient
     main.cpp
-    # src/test/test_PortAudioX.cpp
+    #  src/test/test_AudioPlayer.cpp
+    #  src/test/test_mediacodec_audio.cpp
+    #  src/test/test_PortAudioX.cpp
     ${SRC_BASE}
     ${SRC_CHAT}
 )
@@ -135,7 +139,6 @@ target_link_libraries(ChatClient PRIVATE
     Qt${QT_VERSION_MAJOR}::Network
     Qt::Gui
     Qt::Core
-#    Qt::OpenGL
     ${OpenCV_LIBS}
     ${Protobuf_LIBRARIES}
     ws2_32 # winsock2
