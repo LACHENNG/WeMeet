@@ -3,10 +3,13 @@
 #include <QTimer>
 #include <opencv2/opencv.hpp>
 #include <QDebug>
-#include <opus.h>
+
 #include "protoc/message.pb.h"
+#include "src/audioplayer.h"
+#include "src/av_decoder_muxer.h"
 #include "src/mediacodec.h"
 #include "src/config.h"
+#include "src/portaudiox.h"
 
 AVControl::AVControl(QWidget* showWhere, int fps,  QWidget *parent)
     : m_showWhere(showWhere),
@@ -14,11 +17,14 @@ AVControl::AVControl(QWidget* showWhere, int fps,  QWidget *parent)
     m_pixmapLable(new QLabel(showWhere)),
     m_timerCameraFrame(new QTimer(parent)),
     m_cap(new cv::VideoCapture()),
+    m_audio_output(new AudioPlayer()),
+    m_audio_input(new PortAudioX(PortAudioX::MODE_INPUT)),
     m_mediaCodec(new MediaCodec(MediaCodec::USE_AS_ENCODER)),
     m_mediaDecoder(new AVDecoderMuxer())
 {
     this->setFps(fps);
     connectSlots();
+    m_audio_output->start();
 }
 
 AVControl::~AVControl()
@@ -35,6 +41,14 @@ bool AVControl::startCap()
     return false;
 }
 
+bool AVControl::startCapAudio()
+{
+    if( m_audio_input->start() )
+        return true;
+
+    return false;
+}
+
 void AVControl::processOneAVFrame()
 {
     cv::Mat frame;
@@ -46,7 +60,7 @@ void AVControl::processOneAVFrame()
     displayCVMat(frame, m_showWhere);
     // has to resize to satisfy the configured mediaCodec
     resize(frame, frame, cv::Size(VIDEO_WIDTH, VIDEO_HEIGHT), 0, 0, cv::INTER_CUBIC);
-    int rc = m_mediaCodec->encodeFrame(frame);
+    int rc = m_mediaCodec->encodeAVFrame(frame);
     if(rc != 0){
         qDebug() << "encode frame failed, rc = " << rc;
     }
@@ -56,6 +70,16 @@ void AVControl::connectSlots()
 {
     connect(this->m_timerCameraFrame, SIGNAL(timeout()),
             this, SLOT(processOneAVFrame()));
+
+    // set on captured audio data ready callback
+    m_audio_input->setOnAudioReadableCallback([this](const void* input, unsigned long nSampleNum,
+                                                     size_t nBytesPerSample, uint8_t n_channel,
+                                                     const PaStreamCallbackTimeInfo* timeInfo) -> int{
+        qDebug()<< "captured nSampleNum: " << nSampleNum;
+        this->encodeFrame(input, nSampleNum, nBytesPerSample, n_channel);
+        return paContinue;
+    });
+
 }
 
 void AVControl::stopCap()
@@ -64,6 +88,11 @@ void AVControl::stopCap()
     m_cap->release();
     m_pixmapLable->clear();
     m_pixmapLable->show();
+}
+
+void AVControl::stopCapAudio()
+{
+    m_audio_input->stopUntillDone();
 }
 
 void AVControl::setFps(int Fps)
@@ -91,7 +120,12 @@ void AVControl::setOnPacketDecodedCallback(const OnAVPacketDecodedCallback &cb)
 
 int AVControl::encodeFrame(const cv::Mat &mat)
 {
-    return m_mediaCodec->encodeFrame(mat);
+   return m_mediaCodec->encodeAVFrame(mat);
+}
+
+int AVControl::encodeFrame(const void *input, unsigned long nSampleNum, size_t nBytesPerSample, uint8_t n_channel)
+{
+   return m_mediaCodec->encodeAVFrame(input, nSampleNum, nBytesPerSample, n_channel);
 }
 
 int AVControl::decodeAVPacket(const QSharedPointer<MeetChat::Message>& av_message)
@@ -110,6 +144,11 @@ void AVControl::displayCVMat(const cv::Mat& mat, QWidget * showWhere)
     m_pixmapLable->resize(showWhere->size());
     m_pixmapLable->move(0, 0);
     m_pixmapLable->show();
+}
+
+void AVControl::queueToPlay(void *audio_src, int src_bytes)
+{
+    m_audio_output->queueToPlay(audio_src, src_bytes);
 }
 
 bool AVControl::openCamera()
