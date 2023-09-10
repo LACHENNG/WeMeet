@@ -29,7 +29,7 @@ message Message {
 }
 
 
-// 定义一个AVPacket消息类型，用于存储音视频数据
+// 存储压缩的音视频数据，对标ffmpeg中的AVPacket
 message AVPacket {
   int32 stream_index = 2; // 音视频数据的索引
   int64 pts = 3; // 显示时间戳
